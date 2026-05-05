@@ -7,17 +7,16 @@ from src.controller.controlador import Controlador
 
 class View:
 
-    def __init__(self, controlador : Controlador):
+    def __init__(self, controlador : Controlador) -> None:
         self.controlador = controlador
 
-    def prueba_rapida(self):
+    def prueba_rapida(self) -> None:
         self._imprimer_prueba_1()
         self._imprimer_prueba_2()
         self._imprimer_prueba_3()
         self._imprimir_prueba_4()
 
-
-    def _imprimer_prueba_1(self):
+    def _imprimer_prueba_1(self) -> None:
         # Prueba del metodo general
         print("=" * 60)
         print("  CASO GENERAL")
@@ -36,7 +35,7 @@ class View:
         print("Resultado:")
         pprint.pprint(resultado_1)
 
-    def _imprimer_prueba_2(self):
+    def _imprimer_prueba_2(self) -> None:
         print("=" * 60)
         print("  METODO SIMPLEX")
         print("=" * 60)
@@ -78,7 +77,7 @@ class View:
                 valores = "".join(f"{str(v):>10}" for v in fila)
                 print(etiqueta + valores)
 
-    def _imprimer_prueba_3(self):
+    def _imprimer_prueba_3(self) -> None:
         datos_max = {
             "tipo": "MAX",
             "objetivo": [3, 5],
@@ -117,7 +116,7 @@ class View:
             valores = "".join(f"{str(v):>{ancho}}" for v in fila)
             print(etiqueta + valores)
 
-    def _imprimir_prueba_4(self):
+    def _imprimir_prueba_4(self) -> None:
         datos_1 = {
             "tipo": "MAX",
             "objetivo": [3, 5],
