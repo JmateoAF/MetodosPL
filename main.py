@@ -1,19 +1,15 @@
 import flet as ft
 
+from ui.view import MainView
+
 
 def main(page: ft.Page):
-    page.title = "Flet Moderno"
-    page.vertical_alignment = ft.MainAxisAlignment.CENTER
-    page.theme_mode = ft.ThemeMode.DARK
+    # Instanciamos la vista
+    # Flet asignará automáticamente la propiedad interna .page cuando hagamos el .add()
+    view = MainView(page)
 
-    page.add(
-        ft.Text(
-            "¡Aqui empieza todo!",
-            size=30,
-            weight=ft.FontWeight.BOLD,
-            color=ft.Colors.CYAN_ACCENT  # Cambiado 'colors' por 'Colors'
-        )
-    )
+    # Agregamos el componente a la página
+    page.add(view)
 
 
 if __name__ == "__main__":
