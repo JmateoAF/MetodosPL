@@ -43,7 +43,7 @@ class ResolutorGeneral:
         4: "Problemas numéricos detectados durante la optimización.",
     }
 
-    def __init__(self, datos_entrada: dict):
+    def __init__(self):
         """
         Inicializa el resolutor con los datos crudos del Controlador.
 
@@ -56,8 +56,6 @@ class ResolutorGeneral:
                 "restricciones" : lista de dicts con "coeficientes",
                                 "signo" y "rhs"
         """
-        self._datos = datos_entrada
-
         # Resultados internos (se llenan tras llamar a resolver())
         self._c: np.ndarray = None          # coeficientes objetivo para linprog
         self._A_ub: list = []               # filas de restricciones <=
@@ -65,6 +63,92 @@ class ResolutorGeneral:
         self._A_eq: list = []               # filas de restricciones ==
         self._b_eq: list = []               # RHS de restricciones ==
         self._es_max: bool = False          # True si el problema original es MAX
+
+
+    # ------------------------------------------------------------------
+    # Método público principal
+    # ------------------------------------------------------------------
+
+    def resolver(self, datos_entrada: dict) -> dict:
+        """
+        Ejecuta la resolución completa del problema de PL.
+
+        Pasos:
+            1. Prepara el vector objetivo.
+            2. Prepara y clasifica las restricciones.
+            3. Llama a scipy.optimize.linprog.
+            4. Postprocesa el resultado (re-inversión de signo para MAX).
+            5. Devuelve el diccionario de salida estandarizado.
+
+        Retorna
+        -------
+        dict con las claves:
+            "estado"    : int   — código de estado (0=óptimo, 2=inviable, 3=no acotado…)
+            "mensaje"   : str   — descripción del estado
+            "valor_z"   : float | None — valor óptimo de Z (None si no hay solución)
+            "variables" : list  | None — valores de las variables [x1, x2, …] (None si no hay solución)
+        """
+
+        self._datos = datos_entrada
+
+        try:
+            # --- 1. Preparación ---
+            self._preparar_objetivo()
+            self._preparar_restricciones()
+            A_ub, b_ub, A_eq, b_eq = self._construir_matrices()
+            bounds = self._construir_bounds()
+
+            # --- 2. Llamada a linprog ---
+            resultado_scipy = linprog(
+                c       = self._c,
+                A_ub    = A_ub,
+                b_ub    = b_ub,
+                A_eq    = A_eq,
+                b_eq    = b_eq,
+                bounds  = bounds,
+                method  = "highs",   # Método HiGHS: robusto y eficiente
+            )
+
+            estado  = resultado_scipy.status
+            mensaje = self._MENSAJES_ESTADO.get(estado, resultado_scipy.message)
+
+            # --- 3. Postproceso (solo si hay solución óptima) ---
+            if estado == 0:
+                valor_z = float(resultado_scipy.fun)
+
+                # Si era MAX, re-invertimos el signo del valor objetivo
+                if self._es_max:
+                    valor_z = -valor_z
+
+                variables = [float(v) for v in resultado_scipy.x]
+            else:
+                valor_z   = None
+                variables = None
+
+            return {
+                "estado"    : estado,
+                "mensaje"   : mensaje,
+                "valor_z"   : valor_z,
+                "variables" : variables,
+            }
+
+        except ValueError as e:
+            # Error de validación en los datos de entrada
+            return {
+                "estado"    : -1,
+                "mensaje"   : f"Error en los datos de entrada: {e}",
+                "valor_z"   : None,
+                "variables" : None,
+            }
+        except Exception as e:
+            # Error inesperado en tiempo de ejecución
+            return {
+                "estado"    : -1,
+                "mensaje"   : f"Error interno del resolutor: {e}",
+                "valor_z"   : None,
+                "variables" : None,
+            }
+
 
     # ------------------------------------------------------------------
     # Métodos privados de preparación
@@ -150,113 +234,3 @@ class ResolutorGeneral:
         """
         n = len(self._c)
         return [(0.0, None)] * n
-
-    # ------------------------------------------------------------------
-    # Método público principal
-    # ------------------------------------------------------------------
-
-    def resolver(self) -> dict:
-        """
-        Ejecuta la resolución completa del problema de PL.
-
-        Pasos:
-            1. Prepara el vector objetivo.
-            2. Prepara y clasifica las restricciones.
-            3. Llama a scipy.optimize.linprog.
-            4. Postprocesa el resultado (re-inversión de signo para MAX).
-            5. Devuelve el diccionario de salida estandarizado.
-
-        Retorna
-        -------
-        dict con las claves:
-            "estado"    : int   — código de estado (0=óptimo, 2=inviable, 3=no acotado…)
-            "mensaje"   : str   — descripción del estado
-            "valor_z"   : float | None — valor óptimo de Z (None si no hay solución)
-            "variables" : list  | None — valores de las variables [x1, x2, …] (None si no hay solución)
-        """
-        try:
-            # --- 1. Preparación ---
-            self._preparar_objetivo()
-            self._preparar_restricciones()
-            A_ub, b_ub, A_eq, b_eq = self._construir_matrices()
-            bounds = self._construir_bounds()
-
-            # --- 2. Llamada a linprog ---
-            resultado_scipy = linprog(
-                c       = self._c,
-                A_ub    = A_ub,
-                b_ub    = b_ub,
-                A_eq    = A_eq,
-                b_eq    = b_eq,
-                bounds  = bounds,
-                method  = "highs",   # Método HiGHS: robusto y eficiente
-            )
-
-            estado  = resultado_scipy.status
-            mensaje = self._MENSAJES_ESTADO.get(estado, resultado_scipy.message)
-
-            # --- 3. Postproceso (solo si hay solución óptima) ---
-            if estado == 0:
-                valor_z = float(resultado_scipy.fun)
-
-                # Si era MAX, re-invertimos el signo del valor objetivo
-                if self._es_max:
-                    valor_z = -valor_z
-
-                variables = [float(v) for v in resultado_scipy.x]
-            else:
-                valor_z   = None
-                variables = None
-
-            return {
-                "estado"    : estado,
-                "mensaje"   : mensaje,
-                "valor_z"   : valor_z,
-                "variables" : variables,
-            }
-
-        except ValueError as e:
-            # Error de validación en los datos de entrada
-            return {
-                "estado"    : -1,
-                "mensaje"   : f"Error en los datos de entrada: {e}",
-                "valor_z"   : None,
-                "variables" : None,
-            }
-        except Exception as e:
-            # Error inesperado en tiempo de ejecución
-            return {
-                "estado"    : -1,
-                "mensaje"   : f"Error interno del resolutor: {e}",
-                "valor_z"   : None,
-                "variables" : None,
-            }
-
-
-# ---------------------------------------------------------------------------
-# Función de conveniencia de módulo (interfaz pública para el Controlador)
-# ---------------------------------------------------------------------------
-
-def resolver_caso_general(datos_entrada: dict) -> dict:
-    """
-    Función de conveniencia que instancia ResolutorGeneral y llama a resolver().
-
-    Esta es la función que el Controlador debe importar y llamar.
-
-    Parámetros
-    ----------
-    datos_entrada : dict
-        Diccionario con estructura definida en el contrato de datos de entrada.
-
-    Retorna
-    -------
-    dict
-        Diccionario con estructura definida en el contrato de datos de salida.
-
-    Ejemplo
-    -------
-    #>>> resultado = resolver_caso_general(datos_entrada)
-    #>>> print(resultado["valor_z"])
-    """
-    resolutor = ResolutorGeneral(datos_entrada)
-    return resolutor.resolver()

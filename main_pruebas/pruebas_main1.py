@@ -5,7 +5,7 @@
 
 import pprint
 
-from src.models.resolucion_rapida import resolver_caso_general
+from src.models.resolucion_rapida import ResolutorGeneral
 
 if __name__ == "__main__":
 
@@ -22,8 +22,8 @@ if __name__ == "__main__":
             {"coeficientes": [0, 2, 1], "signo": "==", "rhs": 8},
         ],
     }
-
-    resultado_1 = resolver_caso_general(datos_prueba_1)
+    resolver_todo = ResolutorGeneral()
+    resultado_1 = resolver_todo.resolver(datos_prueba_1)
     print("Resultado:")
     pprint.pprint(resultado_1)
 
@@ -42,7 +42,7 @@ if __name__ == "__main__":
         ],
     }
 
-    resultado_2 = resolver_caso_general(datos_prueba_2)
+    resultado_2 = resolver_todo.resolver(datos_prueba_2)
     print("Resultado:")
     pprint.pprint(resultado_2)
 
@@ -61,6 +61,6 @@ if __name__ == "__main__":
         ],
     }
 
-    resultado_3 = resolver_caso_general(datos_prueba_3)
+    resultado_3 = resolver_todo.resolver(datos_prueba_3)
     print("Resultado:")
     pprint.pprint(resultado_3)
