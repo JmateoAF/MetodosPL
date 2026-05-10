@@ -220,6 +220,14 @@ class VistaIngreso(ft.Container):
             on_click=self._restaurar_problema,
         )
 
+        reset_to_base_button = ft.ElevatedButton(
+            "🔁 Restablecer problema",
+            icon="restart_alt",
+            bgcolor=ACCENT_COLOR, #"#ff9800",
+            color="white",
+            on_click=self._restablecer_problema,
+        )
+
         return ft.Container(
             content=ft.Column(
                 [
@@ -230,7 +238,7 @@ class VistaIngreso(ft.Container):
                     objective_section,
                     restrictions_section,
                     ft.Row(
-                        [save_button, restore_values_button, restore_problem_button],
+                        [save_button, restore_values_button, restore_problem_button, reset_to_base_button],
                         spacing=8,
                         wrap=True,
                         alignment=ft.MainAxisAlignment.END,
@@ -347,6 +355,23 @@ class VistaIngreso(ft.Container):
         self._rebuild_content()
         self.status_text.value = "Problema restaurado al estado inicial."
         self.status_text.color = "#7ee081"
+
+    def _restablecer_problema(self, _event) -> None:
+        """Restablece el problema al estado base (1 variable, 1 restricción, vacío)."""
+        self.objective_fields = []
+        self.restriction_rows = []
+        self.tipo_dropdown.value = "MAX"
+        
+        # Agregar 1 variable vacía
+        self.objective_fields.append(self._crear_campo_coeficiente(0, ""))
+        
+        # Agregar 1 restricción vacía
+        self.restriction_rows.append(self._crear_fila_restriccion(0, None))
+        
+        self._rebuild_content()
+        self.status_text.value = "Problema restablecido al estado base."
+        self.status_text.color = "#ff9800"
+        self.update()
 
     def _armar_diccionario_entrada(self) -> dict:
         datos_entrada = {
