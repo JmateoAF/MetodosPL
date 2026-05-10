@@ -61,10 +61,10 @@ class NavigationApp:
         self.content_container.content = view.build()
         self.page.update()
 
-    def show_ingreso(self, problema: dict | None = None) -> None:
+    def show_ingreso(self, problema: dict | None = None, index: int = 0) -> None:
         if problema is not None:
             set_problema_activo(problema)
-        self.show_view(0, problema=get_problema_activo())
+        self.show_view(index, problema=get_problema_activo())
 
     def _create_view(self, index: int, problema: dict | None = None):
         match index:

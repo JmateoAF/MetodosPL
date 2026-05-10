@@ -3,6 +3,7 @@ from __future__ import annotations
 from copy import deepcopy
 
 import flet as ft
+from pip._internal.models import index
 
 from ui.estado_ui import get_problema_activo, set_problema_activo
 
@@ -129,7 +130,7 @@ class VistaHistorial(ft.Column):
         self.status_text.color = "#7ee081"
 
         if self.navegar_a is not None:
-            self.navegar_a(deepcopy(problema))
+            self.navegar_a(deepcopy(problema), 2)
         else:
             self.update()
 
