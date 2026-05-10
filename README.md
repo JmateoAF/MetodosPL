@@ -6,33 +6,35 @@ Software interactivo desarrollado en Python para la resolución y análisis de p
 
 La aplicación cuenta con una interfaz gráfica (GUI) intuitiva que ofrece 5 módulos principales:
 
-1. **Método Gráfico Interactivo:** Permite resolver problemas de 2 variables. Incluye un plano cartesiano donde la función objetivo y las restricciones son visibles.
-2. **Método Simplex (Paso a Paso):** Resolución tabular que muestra cada iteración (tableau) hasta alcanzar la solución óptima, ideal para el seguimiento académico del algoritmo.
-3. **Método de la M Grande:** Extensión del método tabular para problemas que requieren variables artificiales, mostrando el impacto de la penalización $M$ en cada matriz.
-4. **Método de las Dos Fases:** Desglose del problema en la Fase I (minimización de variables artificiales) y Fase II (optimización de la función objetivo original), con sus respectivas tablas.
-5. **Solución Directa (Solver General):** Un módulo de resolución rápida que omite el paso a paso matricial y entrega el resultado final instantáneamente.
-
-### Análisis de Sensibilidad Visual
-En la vista de resultados de la solución general, el software incluye un panel interactivo. Mediante el ajuste de los valores resultantes, un gráfico de barras dinámico refleja en tiempo real cómo la alteración de una variable de decisión impacta directamente en las demás y en el valor de la función objetivo ($Z$).
+1. **Solución Directa (Solver General):** Un módulo de resolución rápida que omite el paso a paso matricial y entrega el resultado final instantáneamente.
+2. **Método Gráfico Interactivo:** Permite resolver problemas de 2 variables. Incluye un plano cartesiano donde la función objetivo y las restricciones son visibles.
+3. **Método Simplex (Paso a Paso):** Resolución tabular que muestra cada iteración (tableau) hasta alcanzar la solución óptima, ideal para el seguimiento académico del algoritmo.
+4. **Método de la M Grande:** Extensión del método tabular para problemas que requieren variables artificiales, mostrando el impacto de la penalización $M$ en cada matriz.
+5. **Método de las Dos Fases:** Desglose del problema en la Fase I (minimización de variables artificiales) y Fase II (optimización de la función objetivo original), con sus respectivas tablas.
 
 ## Arquitectura del Software
 
 El proyecto está estructurado bajo el patrón de diseño **Modelo-Vista-Controlador (MVC)** para separar estrictamente la lógica matemática de la interfaz de usuario:
 
 * **Modelos (`src/modelos/`):** Contiene la lógica pura de Python. Aquí se ejecutan los cálculos, pivoteos de matrices y algoritmos (sin dependencias de interfaz gráfica).
-* **Vistas (`ui/`):** Archivos `.ui` generados a través de Qt Designer, asegurando un diseño escalable y fácil de mantener.
+* **Vistas (`ui/`):** Desarrolladas íntegramente con Flet para garantizar facilidad de uso y resultados visuales modernos. Por a su naturaleza multiplataforma, el mismo código permite ejecutar la aplicación de forma nativa en escritorio, navegadores web o dispositivos móviles.
 * **Controladores (`src/controladores/`):** Actúan como puente. Capturan los datos ingresados por el usuario, los envían a los modelos matemáticos, y posteriormente inyectan los resultados numéricos y las gráficas en las vistas.
 
 ## Tecnologías Utilizadas
 
-* **Lenguaje:** Python 3.x
-* **Interfaz Gráfica:** PyQt6 (y Qt Designer para maquetación)
-* **Gráficos Interactivos:** PyQtGraph / Matplotlib
+* **Lenguaje:** Python 3.x 
+* **Interfaz Gráfica:** Flet 0.85.0 
+* **Gráficos:** Matplotlib
 * **Cálculo Numérico y Solución Directa:** NumPy, SciPy / PuLP
 
 ## Instalación y Ejecución
 
 1. Clonar el repositorio.
+```bash
+   git clone https://github.com/LeonardoByte/Software_IO_PL
+   cd Software_IO_PL
+```
+
 2. Se recomienda crear y activar un entorno virtual (`.venv`):
 ```bash
    python -m venv .venv
@@ -41,3 +43,12 @@ El proyecto está estructurado bajo el patrón de diseño **Modelo-Vista-Control
    # En Linux/macOS:
    source .venv/bin/activate
    ```
+
+3. Instalar dependencias: Con el entorno virtual activado, instale todos los paquetes necesarios definidos en el archivo requirements.txt:
+```bash
+   pip install -r requirements.txt
+```
+4. Ejecutar la aplicación: Inicie el programa ejecutando el archivo principal (asegúrese de estar en la raíz del proyecto):
+```bash
+   python main.py
+```
