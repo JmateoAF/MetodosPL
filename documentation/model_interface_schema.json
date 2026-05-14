@@ -1,0 +1,514 @@
+{
+  "metadata": {
+    "description": "Especificación de interfaz de métodos de modelos en formato JSON",
+    "date": "2026-05-14",
+    "version": "1.0"
+  },
+  "modules": {
+    "controlador": {
+      "path": "src/controller/controlador.py",
+      "class": "Controlador",
+      "methods": [
+        {
+          "name": "resolver_LP",
+          "description": "Orquesta la resolución de un LP según la opción especificada",
+          "signature": "resolver_LP(datos_entrada: dict, opcion: int) -> dict | None",
+          "parameters": [
+            {
+              "name": "datos_entrada",
+              "type": "dict",
+              "description": "Diccionario del problema",
+              "structure": {
+                "tipo": "string: 'MAX' | 'MIN'",
+                "objetivo": "list[numeric]: coeficientes de la función objetivo",
+                "restricciones": "list[dict] con keys: 'coeficientes' (list), 'signo' (str), 'rhs' (numeric)"
+              }
+            },
+            {
+              "name": "opcion",
+              "type": "int",
+              "mapping": {
+                "1": "ResolutorGeneral (scipy linprog)",
+                "2": "SolucionadorSimplex",
+                "3": "SolucionadorGranM",
+                "4": "SolucionadorDosFases"
+              }
+            }
+          ],
+          "returns": {
+            "type": "dict | None",
+            "description": "Resultado del solver o None si opción inválida",
+            "possible_outputs": [
+              "dict from ResolutorGeneral",
+              "dict from SolucionadorSimplex",
+              "dict from SolucionadorGranM",
+              "dict from SolucionadorDosFases",
+              "None"
+            ]
+          }
+        },
+        {
+          "name": "operar_problema",
+          "description": "Opera sobre el historial (guardar, obtener, eliminar)",
+          "signature": "operar_problema(datos_entrada: dict, opcion: int, indice: int = 0) -> dict | None",
+          "parameters": [
+            {
+              "name": "datos_entrada",
+              "type": "dict",
+              "required_for_option": 1,
+              "structure": "mismo que resolver_LP"
+            },
+            {
+              "name": "opcion",
+              "type": "int",
+              "mapping": {
+                "1": "ingresar_problema",
+                "2": "obtener_problemas",
+                "3": "eliminar_problema"
+              }
+            },
+            {
+              "name": "indice",
+              "type": "int",
+              "default": 0,
+              "used_by_option": "2, 3"
+            }
+          ],
+          "returns": {
+            "type": "dict | None",
+            "structure": "Según opción, devuelve diccionario del problema o None"
+          }
+        },
+        {
+          "name": "obtener_historial_de_problema",
+          "description": "Devuelve la lista completa del historial",
+          "signature": "obtener_historial_de_problema() -> list[dict]",
+          "returns": {
+            "type": "list[dict]",
+            "element_structure": "dict con estructura de problema (tipo, objetivo, restricciones)"
+          }
+        }
+      ]
+    },
+    "historial_de_problemas": {
+      "path": "src/models/historial_de_problemas.py",
+      "class": "HistorialDeProblemas",
+      "methods": [
+        {
+          "name": "ingresar_problema",
+          "signature": "ingresar_problema(datos_entrada: dict) -> dict",
+          "input": {
+            "structure": {
+              "tipo": "string",
+              "objetivo": "list",
+              "restricciones": "list[dict]"
+            }
+          },
+          "output": {
+            "type": "dict",
+            "description": "El mismo diccionario guardado"
+          }
+        },
+        {
+          "name": "obtener_historial_de_problemas",
+          "signature": "obtener_historial_de_problemas() -> list[dict]",
+          "output": {
+            "type": "list[dict]",
+            "description": "Todos los problemas guardados"
+          }
+        },
+        {
+          "name": "obtener_problemas",
+          "signature": "obtener_problemas(indice: int) -> dict",
+          "output": {
+            "type": "dict",
+            "description": "Problema en el índice especificado"
+          }
+        },
+        {
+          "name": "eliminar_problema",
+          "signature": "eliminar_problema(indice: int) -> dict",
+          "output": {
+            "type": "dict",
+            "description": "Problema eliminado (removido de la lista)"
+          }
+        }
+      ]
+    },
+    "resolucion_rapida": {
+      "path": "src/models/resolucion_rapida.py",
+      "class": "ResolutorGeneral",
+      "methods": [
+        {
+          "name": "resolver",
+          "description": "Resuelve LP mediante scipy.optimize.linprog (método HiGHS)",
+          "signature": "resolver(datos_entrada: dict) -> dict",
+          "input": {
+            "structure": {
+              "tipo": "string: 'MAX' | 'MIN'",
+              "objetivo": "list[numeric]",
+              "restricciones": [
+                {
+                  "coeficientes": "list[numeric]",
+                  "signo": "string: '<=' | '>=' | '=='",
+                  "rhs": "numeric"
+                }
+              ]
+            }
+          },
+          "output": {
+            "success": {
+              "estado": 0,
+              "mensaje": "string",
+              "valor_z": "float",
+              "variables": "list[float]"
+            },
+            "failure": {
+              "estado": "1 | 2 | 3 | 4 | -1",
+              "mensaje": "string describing error",
+              "valor_z": "None",
+              "variables": "None"
+            },
+            "status_codes": {
+              "0": "Optimización exitosa",
+              "1": "Límite de iteraciones",
+              "2": "Inviable",
+              "3": "No acotado",
+              "4": "Problemas numéricos",
+              "-1": "Error entrada/interno"
+            }
+          }
+        }
+      ]
+    },
+    "simplex": {
+      "path": "src/models/simplex.py",
+      "class": "SolucionadorSimplex",
+      "methods": [
+        {
+          "name": "resolver",
+          "description": "Simplex tabular paso a paso. SÓLO acepta restricciones '<='. Usa Fraction para exactitud.",
+          "signature": "resolver(datos_entrada: dict) -> dict",
+          "restrictions": {
+            "allowed_signs": ["<="],
+            "rejected_signs": [">=", "=="]
+          },
+          "input": {
+            "structure": {
+              "tipo": "string: 'MAX' | 'MIN'",
+              "objetivo": "list[numeric]",
+              "restricciones": [
+                {
+                  "coeficientes": "list[numeric]",
+                  "signo": "<= (OBLIGATORIO)",
+                  "rhs": "numeric"
+                }
+              ]
+            }
+          },
+          "output": {
+            "success": {
+              "estado": "optimo",
+              "z_optimo": "Fraction",
+              "variables_decision": "list[Fraction]",
+              "encabezados": "list[str]",
+              "variables_base": "list[str]",
+              "iteraciones": "list[dict]"
+            },
+            "requires_other_method": {
+              "estado": "requiere_otro_metodo",
+              "z_optimo": "None",
+              "variables_decision": "None",
+              "encabezados": "[]",
+              "variables_base": "[]",
+              "iteraciones": "[]"
+            },
+            "no_bounded": {
+              "estado": "no_acotado",
+              "z_optimo": "None",
+              "variables_decision": "None"
+            }
+          },
+          "iteracion_structure": {
+            "tabla": "np.ndarray (dtype=object, valores Fraction)",
+            "fila_pivote": "int | None",
+            "col_pivote": "int | None",
+            "mensaje": "str"
+          }
+        }
+      ]
+    },
+    "m_grande": {
+      "path": "src/models/m_grande.py",
+      "class": "SolucionadorGranM",
+      "methods": [
+        {
+          "name": "resolver",
+          "description": "Método M Grande para LP con restricciones <=, >=, ==. Usa Fraction. M=10^9.",
+          "signature": "resolver(datos_entrada: dict) -> dict",
+          "restrictions": {
+            "allowed_signs": ["<=", ">=", "=="],
+            "M_value": "Fraction(10**9, 1)"
+          },
+          "input": {
+            "structure": {
+              "tipo": "string: 'MAX' | 'MIN'",
+              "objetivo": "list[numeric]",
+              "restricciones": [
+                {
+                  "coeficientes": "list[numeric]",
+                  "signo": "<= | >= | ==",
+                  "rhs": "numeric"
+                }
+              ]
+            }
+          },
+          "output": {
+            "optimal": {
+              "estado": "optimo",
+              "z_optimo": "Fraction",
+              "variables_decision": "list[Fraction]",
+              "encabezados": "list[str]",
+              "variables_base": "list[str]",
+              "iteraciones": "list[dict]"
+            },
+            "infeasible": {
+              "estado": "inviable",
+              "z_optimo": "None",
+              "variables_decision": "None"
+            },
+            "unbounded": {
+              "estado": "no_acotado",
+              "z_optimo": "None",
+              "variables_decision": "None"
+            }
+          },
+          "iteracion_structure": {
+            "tabla": "np.ndarray (dtype=object)",
+            "fila_pivote": "int | None",
+            "col_pivote": "int | None",
+            "mensaje": "str"
+          }
+        }
+      ]
+    },
+    "dos_fases": {
+      "path": "src/models/dos_fases.py",
+      "class": "SolucionadorDosFases",
+      "methods": [
+        {
+          "name": "resolver",
+          "description": "Two-Phase Simplex. Fase 1 minimiza W=ΣAi. Fase 2 optimiza Z original. Usa Fraction.",
+          "signature": "resolver(datos_entrada: dict) -> dict",
+          "restrictions": {
+            "allowed_signs": ["<=", ">=", "=="]
+          },
+          "input": {
+            "structure": {
+              "tipo": "string: 'MAX' | 'MIN'",
+              "objetivo": "list[numeric]",
+              "restricciones": [
+                {
+                  "coeficientes": "list[numeric]",
+                  "signo": "<= | >= | ==",
+                  "rhs": "numeric"
+                }
+              ]
+            }
+          },
+          "output": {
+            "optimal": {
+              "estado": "optimo",
+              "z_optimo": "Fraction",
+              "variables_decision": "list[Fraction]",
+              "encabezados_f1": "list[str] (Fase 1, con artificiales)",
+              "encabezados_f2": "list[str] (Fase 2, sin artificiales)",
+              "variables_base": "list[str]",
+              "iteraciones": "list[dict con 'fase' key]"
+            },
+            "infeasible": {
+              "estado": "inviable",
+              "z_optimo": "None",
+              "variables_decision": "None",
+              "encabezados_f1": "list[str]",
+              "encabezados_f2": "[] o list[str]"
+            },
+            "unbounded": {
+              "estado": "no_acotado",
+              "z_optimo": "None",
+              "variables_decision": "None"
+            }
+          },
+          "iteracion_structure": {
+            "fase": "1 | 2",
+            "tabla": "np.ndarray (dtype=object)",
+            "fila_pivote": "int | None",
+            "col_pivote": "int | None",
+            "mensaje": "str"
+          }
+        }
+      ]
+    },
+    "graficador": {
+      "path": "src/utils/graficador.py",
+      "functions": [
+        {
+          "name": "generar_grafico_cartesiano",
+          "description": "Genera gráfico 2D de región factible. Devuelve data-URI base64 para ft.Image()",
+          "signature": "generar_grafico_cartesiano(problema: dict, resultado_resolucion: dict) -> str",
+          "restrictions": {
+            "num_variables": 2,
+            "num_coeff_per_constraint": 2,
+            "rendering": "matplotlib con backend 'agg'"
+          },
+          "input": {
+            "problema": {
+              "tipo": "string: 'MAX' | 'MIN'",
+              "objetivo": "list[numeric] (exactly 2 elements)",
+              "restricciones": [
+                {
+                  "coeficientes": "list[numeric] (exactly 2 elements)",
+                  "signo": "<= | >= | ==",
+                  "rhs": "numeric"
+                }
+              ]
+            },
+            "resultado_resolucion": {
+              "estado": "int (e.g., 0 for success)",
+              "variables": "list[numeric] (must have at least 2)",
+              "valor_z": "numeric | None"
+            }
+          },
+          "output": {
+            "type": "string",
+            "format": "data:image/png;base64,<base64_encoded_image>",
+            "on_error": "None",
+            "image_details": {
+              "format": "PNG",
+              "background": "#1e1e1e",
+              "dpi": 100,
+              "contents": [
+                "constraints as dashed colored lines",
+                "feasible region as filled polygon",
+                "optimal point as gold circle with annotation",
+                "isoquant line (Z optimal) as solid lime line",
+                "legend on upper right"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  },
+  "common_structures": {
+    "problema_dict": {
+      "description": "Estructura estándar de un problema de programación lineal",
+      "structure": {
+        "tipo": {
+          "type": "string",
+          "allowed": ["MAX", "MIN"],
+          "required": true
+        },
+        "objetivo": {
+          "type": "list",
+          "element_type": "numeric (int | float | Fraction)",
+          "description": "Coeficientes c_j de la función objetivo",
+          "examples": "[3, 2, -1]"
+        },
+        "restricciones": {
+          "type": "list[dict]",
+          "element_structure": {
+            "coeficientes": {
+              "type": "list[numeric]",
+              "description": "Coeficientes a_ij de la restricción i"
+            },
+            "signo": {
+              "type": "string",
+              "allowed": ["<=", ">=", "=="],
+              "description": "Operador de la restricción"
+            },
+            "rhs": {
+              "type": "numeric",
+              "description": "Lado derecho (right-hand side, b_i)"
+            }
+          }
+        }
+      }
+    },
+    "resultado_dict_simplex_style": {
+      "description": "Estructura de salida para solvers tabulares (Simplex, GranM, DosFases)",
+      "estado_field": "string",
+      "states": {
+        "optimo": "Solución óptima encontrada",
+        "inviable": "Sin solución factible",
+        "no_acotado": "Función objetivo no acotada",
+        "requiere_otro_metodo": "Este solver no puede resolver (ej. Simplex con >=)"
+      },
+      "common_keys": {
+        "estado": "str",
+        "z_optimo": "Fraction | None",
+        "variables_decision": "list[Fraction] | None",
+        "encabezados": "list[str]",
+        "variables_base": "list[str]",
+        "iteraciones": "list[dict]"
+      }
+    },
+    "resultado_dict_linprog_style": {
+      "description": "Estructura de salida para ResolutorGeneral",
+      "common_keys": {
+        "estado": "int",
+        "mensaje": "str",
+        "valor_z": "float | None",
+        "variables": "list[float] | None"
+      }
+    },
+    "tableau_iteration": {
+      "description": "Estructura de cada iteración en una lista de iteraciones",
+      "keys": {
+        "tabla": "np.ndarray (dtype=object) con valores Fraction",
+        "fila_pivote": "int | None",
+        "col_pivote": "int | None",
+        "mensaje": "str",
+        "fase": "int (only in DosFases, values 1 or 2)"
+      }
+    }
+  },
+  "data_types": {
+    "numeric": "int | float | fractions.Fraction",
+    "constraints_ordering": "[X1 ... Xn | S1 ... Sm | A1 ... Ap | RHS]",
+    "column_names": {
+      "X_i": "variable de decisión i",
+      "S_i": "variable de holgura o exceso i",
+      "A_i": "variable artificial i",
+      "Base": "nombre de columna para variable básica (1ª columna en tableau)",
+      "RHS": "right-hand side (última columna)"
+    }
+  },
+  "signos_restricciones": {
+    "<=": {
+      "name": "menor o igual",
+      "solver_support": ["ResolutorGeneral", "SolucionadorSimplex", "SolucionadorGranM", "SolucionadorDosFases"],
+      "aux_variable": "holgura (slack)",
+      "sign_in_tableau": "+1"
+    },
+    ">=": {
+      "name": "mayor o igual",
+      "solver_support": ["ResolutorGeneral (transformado)", "SolucionadorGranM", "SolucionadorDosFases"],
+      "aux_variable": "exceso (surplus) + artificial",
+      "sign_in_tableau": "-1 (exceso), +1 (artificial)"
+    },
+    "==": {
+      "name": "igual",
+      "solver_support": ["ResolutorGeneral", "SolucionadorGranM", "SolucionadorDosFases"],
+      "aux_variable": "artificial",
+      "sign_in_tableau": "+1"
+    }
+  },
+  "notes": {
+    "fraction_vs_float": "Los solvers tabulares (Simplex, GranM, DosFases) usan fractions.Fraction para exactitud. ResolutorGeneral uses float.",
+    "tabla_structure": "Fila 0 es siempre la función objetivo (Z o W). Filas 1…m son restricciones.",
+    "base_initialization": "Inicialmente la base contiene holguras para restricciones <= o variables artificiales para >= y ==.",
+    "dois_fases_special": "DosFases tiene encabezados_f1 (Fase 1 con artificiales) y encabezados_f2 (Fase 2 sin artificiales)."
+  }
+}
+

@@ -3,7 +3,6 @@ from __future__ import annotations
 from copy import deepcopy
 
 import flet as ft
-from pip._internal.models import index
 
 from ui.estado_ui import get_problema_activo, set_problema_activo
 

@@ -88,7 +88,7 @@ class SolucionadorSimplex:
         Retorna
         -------
         dict con las claves:
-            "estado"             : "optimo" | "no_acotado" | "requiere_otro_metodo"
+            "estado"             : "optimo" | "no_acotado" | "inviable" | "requiere_otro_metodo"
             "z_optimo"           : Fraction | None
             "variables_decision" : list[Fraction] | None
             "encabezados"        : list[str]   ← nombres de columnas para la Vista
@@ -104,6 +104,15 @@ class SolucionadorSimplex:
         for r in datos_entrada["restricciones"]:
             if r["signo"].strip() != "<=":
                 return self._respuesta_error("requiere_otro_metodo")
+
+        # --- Detectar inviabilidad por RHS negativo ---
+        # Con restricciones <= y variables de holgura, la solución básica
+        # inicial requiere RHS >= 0 en todas las restricciones.
+        # Un RHS negativo hace que la variable de holgura tome valor negativo,
+        # lo que viola la no-negatividad y hace el problema inviable.
+        for r in datos_entrada["restricciones"]:
+            if Fraction(r["rhs"]) < Fraction(0):
+                return self._respuesta_error("inviable")
 
         # --- Construir encabezados de columnas ---
         self._nombres_cols = self._construir_encabezados()
