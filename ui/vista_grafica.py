@@ -135,11 +135,37 @@ class VistaGrafica(ft.Column):
             self._safe_update()
             return
 
-        self.status_text.value = "Gráfico generado correctamente."
-        self.status_text.color = "#7ee081"
+        # ==========================================
+        # PARCHE APLICADO BASADO EN LA AUDITORÍA
+        # ==========================================
+        estado = resultado.get("estado")
 
-        # Generar gráfico
-        self._generar_grafico(problema, resultado)
+        if estado == 0:  # 0 es el código de éxito en ResolutorGeneral
+            self.status_text.value = "Gráfico generado correctamente."
+            self.status_text.color = "#7ee081"
+            # Generar gráfico solo si hay solución óptima
+            self._generar_grafico(problema, resultado)
+        else:
+            # Capturar mensaje de error ("inviable", "no acotado", etc.)
+            mensaje_error = resultado.get("mensaje", "El problema no tiene una solución óptima acotada.")
+            self.status_text.value = f"Atención: {mensaje_error}"
+            self.status_text.color = "#ffb74d"  # Color de advertencia (naranja)
+
+            # Limpiar la imagen y mostrar el cuadro de advertencia
+            self.img_container.content = ft.Container(
+                content=ft.Text(
+                    f"No se puede dibujar la región óptima:\n{mensaje_error}",
+                    color="#ffb74d",
+                    text_align=ft.TextAlign.CENTER,
+                    weight=ft.FontWeight.W_500,
+                ),
+                padding=20,
+                border=ft.Border.all(1, "#ffb74d"),
+                border_radius=12,
+            )
+            # Renderizamos la caja de resultados para que el usuario lea el estatus detallado (mostrará N/D)
+            self._renderizar_resultados(problema, resultado)
+
         self._safe_update()
 
     def _generar_grafico(self, problema: dict, resultado: dict) -> None:
