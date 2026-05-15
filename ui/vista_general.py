@@ -4,7 +4,6 @@ import flet as ft
 
 from ui.estado_ui import get_problema_activo
 
-
 ACCENT_COLOR = "#4b2981"
 
 
@@ -93,10 +92,29 @@ class VistaGeneral(ft.Column):
             return
 
         resultado = self.controlador.resolver_LP(problema, 1)
+
+        # ==========================================
+        # PARCHE UX: Notificación visual amigable de error
+        # ==========================================
         if not resultado or resultado.get("estado") != 0:
-            self.status_text.value = f"No se pudo resolver: {resultado.get('mensaje', 'Error desconocido') if resultado else 'Error'}"
-            self.status_text.color = "#ff8a80"
-            self.resultado_container.controls = []
+            mensaje_error = resultado.get('mensaje',
+                                          'Error desconocido') if resultado else 'El controlador devolvió una respuesta vacía.'
+            self.status_text.value = "Atención: No se pudo encontrar un resultado óptimo."
+            self.status_text.color = "#ffb74d"  # Naranja para mantener consistencia con advertencias
+
+            self.resultado_container.controls = [
+                ft.Container(
+                    content=ft.Text(
+                        f"Estado del análisis:\n{mensaje_error}",
+                        color="#ffb74d",
+                        text_align=ft.TextAlign.CENTER,
+                        weight=ft.FontWeight.W_500,
+                    ),
+                    padding=20,
+                    border=ft.Border.all(1, "#ffb74d"),
+                    border_radius=12,
+                )
+            ]
             self._safe_update()
             return
 
@@ -130,7 +148,6 @@ class VistaGeneral(ft.Column):
         ]
 
         self._safe_update()
-
 
     def _safe_update(self) -> None:
         """Actualiza la vista de forma segura."""
