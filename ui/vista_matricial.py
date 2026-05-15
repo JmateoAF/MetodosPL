@@ -102,10 +102,10 @@ class VistaMatricial(ft.Column):
             )
 
         columns = [
-            ft.DataColumn("Fila")
+            ft.DataColumn(ft.Text("Fila", weight=ft.FontWeight.BOLD))
         ]
         columns.extend(
-            ft.DataColumn(columna)
+            ft.DataColumn(ft.Text(columna, weight=ft.FontWeight.BOLD))
             for columna in encabezado
         )
 
@@ -129,7 +129,7 @@ class VistaMatricial(ft.Column):
         )
 
         return ft.Container(
-            content=tabla_control,
+            content=ft.Row([tabla_control], scroll=ft.ScrollMode.AUTO),  # Permite scroll horizontal
             padding=12,
             border=ft.Border.all(1, ACCENT_COLOR),
             border_radius=12,
@@ -151,17 +151,28 @@ class VistaMatricial(ft.Column):
         objetivo = problema.get("objetivo", [])
         func_objetivo = _formatear_funcion_objetivo(tipo, objetivo)
 
+        # ==========================================
+        # PARCHE 1: Evitar el crash iterando sobre None
+        # ==========================================
+        # Si variables_decision es None, lo forzamos a una lista vacía
+        variables = resultado.get('variables_decision')
+        if variables is None:
+            variables = []
+
+        texto_variables = "Variables: " + ",  ".join(
+            [f"X{i + 1} = {self._formatear_valor(v)}" for i, v in enumerate(variables)])
+        if not variables:
+            texto_variables = "Variables: N/D"
+
         # Renderizar resultado inicial con función objetivo
         controles.append(
             ft.Container(
                 content=ft.Column(
                     [
                         ft.Text(func_objetivo, weight=ft.FontWeight.BOLD, size=14, selectable=True),
-                        ft.Text(f"Z óptimo: {self._formatear_valor(resultado.get('z_optimo', 'N/D'))}", weight=ft.FontWeight.W_600),
-                        ft.Text(
-                            "Variables: "
-                            + ",  ".join(map(str, [f"X{i + 1} = {self._formatear_valor(v)}" for i, v in enumerate(resultado.get('variables_decision', []))]))
-                        ),
+                        ft.Text(f"Z óptimo: {self._formatear_valor(resultado.get('z_optimo', 'N/D'))}",
+                                weight=ft.FontWeight.W_600),
+                        ft.Text(texto_variables),
                         ft.Text(f"Estado: {resultado.get('estado', 'desconocido')}", size=11, italic=True),
                         ft.Text(resultado.get('mensaje', ''), italic=True, size=11),
                     ],
@@ -175,14 +186,7 @@ class VistaMatricial(ft.Column):
 
         iteraciones = resultado.get("iteraciones", []) or []
         if not iteraciones:
-            controles.append(
-                ft.Container(
-                    content=ft.Text("No se recibieron iteraciones para mostrar."),
-                    padding=14,
-                    border=ft.Border.all(1, ACCENT_COLOR),
-                    border_radius=12,
-                )
-            )
+            # Si no hay iteraciones, ya no se considera un error en sí, sino una consecuencia del estado
             return controles
 
         for indice, iteracion in enumerate(iteraciones, start=1):
@@ -195,7 +199,8 @@ class VistaMatricial(ft.Column):
             if "encabezados" in resultado:
                 encabezado = resultado.get("encabezados", [])
             else:
-                encabezado = resultado.get("encabezados_f1", []) if iteracion.get("fase") == 1 else resultado.get("encabezados_f2", [])
+                encabezado = resultado.get("encabezados_f1", []) if iteracion.get("fase") == 1 else resultado.get(
+                    "encabezados_f2", [])
 
             controles.append(
                 ft.Container(
@@ -249,8 +254,22 @@ class VistaMatricial(ft.Column):
             self._safe_update()
             return
 
-        self.status_text.value = "Problema activo detectado y resuelto correctamente."
-        self.status_text.color = "#7ee081"
+        # ==========================================
+        # PARCHE 2: Semántica de colores según el estado
+        # ==========================================
+        estado = resultado.get("estado", "")
+
+        if estado == "optimo":
+            self.status_text.value = "Problema activo detectado y resuelto correctamente."
+            self.status_text.color = "#7ee081"  # Verde
+        elif estado == "requiere_otro_metodo":
+            self.status_text.value = "Atención: Este problema requiere otro método de resolución (contiene restricciones >= o ==)."
+            self.status_text.color = "#ffb74d"  # Naranja
+        else:
+            # Para estados como "inviable" o "no_acotado"
+            self.status_text.value = f"Atención: El problema es {estado}."
+            self.status_text.color = "#ffb74d"  # Naranja
+
         self.resultados_column.controls = self._renderizar_iteraciones(resultado, problema)
         self._safe_update()
 
