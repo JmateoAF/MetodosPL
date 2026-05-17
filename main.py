@@ -12,8 +12,8 @@ def main(page: ft.Page):
     page.theme_mode = ft.ThemeMode.DARK
     # Aplicar color de acento (seed) tal como especifica indicaciones_gui.md
     page.theme = ft.Theme(color_scheme_seed="#4b2981")
-    page.window_width = 1200
-    page.window_height = 800
+
+    page.update() 
 
     # Instancia única y global del controlador (no crear más instancias en las vistas)
     controlador = Controlador()
