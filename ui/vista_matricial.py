@@ -120,7 +120,7 @@ class VistaMatricial(ft.Column):
             ]
             rows.append(ft.DataRow(
                 cells=cells,
-                color={"": cell_color} if cell_color else None,
+                color={"": cell_color} if cell_color else {"": BG_TABLE}, # Si no es Z, le mete el color oscuro de la tabla
             ))
 
         tabla_control = ft.DataTable(
@@ -128,6 +128,7 @@ class VistaMatricial(ft.Column):
             rows=rows,
             border=ft.Border(top=ft.BorderSide(1, ACCENT_COLOR + "55"), bottom=ft.BorderSide(1, ACCENT_COLOR + "55"), left=ft.BorderSide(1, ACCENT_COLOR + "55"), right=ft.BorderSide(1, ACCENT_COLOR + "55")),
             heading_row_color={"": ACCENT_COLOR},
+            data_row_color={"": BG_TABLE}, 
             heading_row_height=42,
             data_row_max_height=44,
             data_row_min_height=40,
@@ -180,7 +181,6 @@ class VistaMatricial(ft.Column):
                             ], spacing=2),
                             padding=16,
                             border_radius=8, bgcolor="#1e2130", border=ft.Border(top=ft.BorderSide(1, BORDER_COLOR), bottom=ft.BorderSide(1, BORDER_COLOR), left=ft.BorderSide(1, BORDER_COLOR), right=ft.BorderSide(1, BORDER_COLOR)),
-                            expand=True,
                         ),
                     ], spacing=8, wrap=True),
                     ft.Text(f"Estado: {estado}", size=11, color=TEXT_MUTED, italic=True) if estado else ft.Container(),
@@ -240,6 +240,7 @@ class VistaMatricial(ft.Column):
             pass
 
     def refresh(self) -> None:
+        self.resultados_column.controls.clear()
         problema = getattr(self.controlador, "problema_activo", None) or get_problema_activo()
 
         if not problema:

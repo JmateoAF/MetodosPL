@@ -60,7 +60,6 @@ class VistaGrafica(ft.Column):
             border_radius=12,
             bgcolor=BG_CARD,
             expand=True,
-            height=300,
         )
         self.resultado_container = ft.Column(spacing=10)
 

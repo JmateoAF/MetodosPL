@@ -59,7 +59,11 @@ class NavigationApp:
         self.selected_index = index
         self.nav.selected_index = index
         view = self._create_view(index=index, problema=problema)
-        self.content_container.content = None
+        
+        if hasattr(self.content_container, "controls") and self.content_container.controls:
+            self.content_container.controls.clear()
+
+        self.content_container.content = None 
         self.content_container.content = view.build()
         self.page.update()
 
