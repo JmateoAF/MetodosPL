@@ -63,11 +63,21 @@ def _seccion(titulo: str, contenido: ft.Control) -> ft.Container:
     )
 
 
-def _nuevo_check(indice: int, valor: bool = True) -> ft.Checkbox:
-    return ft.Checkbox(
-        label=f"X{indice + 1} ∈ ℤ",
+def _nuevo_tipo_dropdown(indice: int, valor: str = "Entera") -> ft.Dropdown:
+    """Dropdown de tipo por variable: Continua / Entera / Binaria."""
+    return ft.Dropdown(
+        label=f"X{indice + 1}",
         value=valor,
-        active_color=ACCENT_COLOR,
+        options=[
+            ft.dropdown.Option("Entera"),
+            ft.dropdown.Option("Binaria"),
+        ],
+        width=120,
+        border_color=BORDER_COLOR,
+        focused_border_color=ACCENT_COLOR,
+        bgcolor=BG_FIELD,
+        color=TEXT_PRIMARY,
+        border_radius=8,
     )
 
 
@@ -77,7 +87,7 @@ class VistaIngresoPi(ft.Container):
         controlador,
         navegar_a=None,
         problema_inicial: dict | None = None,
-        cambiar_modo=None,          # callback a NavigationApp.cambiar_modo
+        cambiar_modo=None,
     ) -> None:
         super().__init__(expand=True, padding=0, bgcolor="transparent")
         self.controlador = controlador
@@ -100,7 +110,7 @@ class VistaIngresoPi(ft.Container):
         self.status_text = ft.Text("", size=12, visible=False)
         self.objective_fields: list[ft.TextField] = []
         self.restriction_rows: list[dict] = []
-        self.integer_checks: list[ft.Checkbox] = []    # uno por variable
+        self.tipo_var_dropdowns: list[ft.Dropdown] = []   # Continua / Entera / Binaria
         self._build_initial_form()
         self.content = self._build_layout()
 
@@ -125,7 +135,7 @@ class VistaIngresoPi(ft.Container):
                 ),
                 _modo_btn(
                     "Programación Lineal Entera", activo=True,
-                    on_click=lambda _e: None,           # ya está en PI
+                    on_click=lambda _e: None,
                 ),
             ], spacing=8),
             padding=10,
@@ -144,17 +154,26 @@ class VistaIngresoPi(ft.Container):
     # ------------------------------------------------------------------
 
     def _build_initial_form(self) -> None:
-        objetivo = list((self.problema_inicial or {}).get("objetivo", []) or [])
+        objetivo     = list((self.problema_inicial or {}).get("objetivo", []) or [])
         restricciones = list((self.problema_inicial or {}).get("restricciones", []) or [])
-        enteras = list((self.problema_inicial or {}).get("enteras", []) or [])
-        num_variables = max(len(objetivo), 2)
+        tipos_var    = list((self.problema_inicial or {}).get("tipos_var", []) or [])
+
+        # Compatibilidad con el campo "enteras" anterior (bool list)
+        if not tipos_var:
+            enteras_old = list((self.problema_inicial or {}).get("enteras", []) or [])
+            tipos_var = [
+                "Entera" if (i < len(enteras_old) and enteras_old[i]) else "Continua"
+                for i in range(max(len(objetivo), 2))
+            ]
+
+        num_variables    = max(len(objetivo), 2)
         num_restricciones = max(len(restricciones), 1)
 
         for i in range(num_variables):
             valor = objetivo[i] if i < len(objetivo) else ""
             self.objective_fields.append(_campo(f"X{i+1}", valor))
-            es_entera = bool(enteras[i]) if i < len(enteras) else True
-            self.integer_checks.append(_nuevo_check(i, es_entera))
+            tipo_v = tipos_var[i] if i < len(tipos_var) else "Entera"
+            self.tipo_var_dropdowns.append(_nuevo_tipo_dropdown(i, tipo_v))
 
         for i in range(num_restricciones):
             r = restricciones[i] if i < len(restricciones) else {}
@@ -164,7 +183,7 @@ class VistaIngresoPi(ft.Container):
         restriccion = restriccion or {}
         coeficientes = list(restriccion.get("coeficientes", []) or [])
         signo = restriccion.get("signo", "<=")
-        rhs = restriccion.get("rhs", "")
+        rhs   = restriccion.get("rhs", "")
         coeff_fields = []
         for vi in range(len(self.objective_fields)):
             valor = coeficientes[vi] if vi < len(coeficientes) else ""
@@ -202,29 +221,42 @@ class VistaIngresoPi(ft.Container):
                 return 0
 
     # ------------------------------------------------------------------
-    # Sección de variables enteras
+    # Sección tipo de variable
     # ------------------------------------------------------------------
 
-    def _build_integer_rows(self) -> list[ft.Row]:
-        rows: list[ft.Row] = []
-        max_per_row = 11
-        for i in range(0, len(self.integer_checks), max_per_row):
-            rows.append(ft.Row(self.integer_checks[i:i + max_per_row], spacing=16, tight=True))
-        return rows
-
     def _build_integer_section(self) -> ft.Container:
+        dropdowns = self.tipo_var_dropdowns
+        rows: list[ft.Row] = []
+        max_per_row = 9
+        for i in range(0, len(dropdowns), max_per_row):
+            rows.append(
+                ft.Row(
+                    dropdowns[i:i + max_per_row],
+                    wrap=False,
+                    spacing=10,
+                    alignment=ft.MainAxisAlignment.START,
+                    expand=False,
+                )
+            )
+
+        label_width = 120
+        spacing = 10
+        total_width = len(dropdowns) * label_width + max(0, len(dropdowns) - 1) * spacing
+        container_width = min(total_width + 32, 1220) if total_width > 0 else None
+
         return ft.Container(
+            width=container_width,
             content=ft.Column([
                 ft.Row([
                     ft.Icon(ft.Icons.FUNCTIONS, size=14, color=ACCENT_COLOR),
-                    ft.Text("Variables enteras", size=13, weight=ft.FontWeight.BOLD, color=TEXT_PRIMARY),
-                ], spacing=6, tight=True),
+                    ft.Text("Tipo de variable", size=13, weight=ft.FontWeight.BOLD, color=TEXT_PRIMARY),
+                ], spacing=6),
                 ft.Text(
-                    "Marca las variables que deben tomar valores enteras.",
+                    "Continua: real · Entera: ℤ · Binaria: solo 0 o 1",
                     size=11, color=TEXT_MUTED,
                 ),
-                *self._build_integer_rows(),
-            ], spacing=10, tight=True, horizontal_alignment=ft.CrossAxisAlignment.START),
+                *rows,
+            ], spacing=10),
             padding=16,
             border_radius=12,
             bgcolor=BG_CARD,
@@ -241,7 +273,6 @@ class VistaIngresoPi(ft.Container):
     # ------------------------------------------------------------------
 
     def _build_layout(self) -> ft.Control:
-        # Función objetivo
         fo_controls = [ft.Text("Z =", color=TEXT_MUTED, size=13)]
         for i, campo in enumerate(self.objective_fields):
             fo_controls.append(campo)
@@ -260,7 +291,6 @@ class VistaIngresoPi(ft.Container):
             ], spacing=10),
         )
 
-        # Restricciones
         restricciones_col = ft.Column(spacing=10)
         for i, fila in enumerate(self.restriction_rows, start=1):
             restricciones_col.controls.append(self._build_restriction_row(i, fila))
@@ -274,16 +304,14 @@ class VistaIngresoPi(ft.Container):
 
         return ft.Container(
             content=ft.Column([
-                # ── Toggle de modo ──────────────────────────────────
                 self._build_mode_toggle(),
-                # ── Encabezado ──────────────────────────────────────
                 ft.Column([
                     ft.Text("Ingresar Problema", size=20, weight=ft.FontWeight.BOLD, color=TEXT_PRIMARY),
-                    ft.Text("Define función objetivo, variables enteras y restricciones.", size=12, color=TEXT_MUTED),
+                    ft.Text("Define función objetivo, tipo de variables y restricciones.", size=12, color=TEXT_MUTED),
                 ], spacing=2),
                 ft.Divider(color=BORDER_COLOR, height=1),
                 fo_section,
-                self._build_integer_section(),  # ← sección exclusiva PI
+                self._build_integer_section(),
                 rest_section,
                 ft.Row([
                     _btn("Guardar problema", ft.Icons.SAVE, self._guardar_problema, color=GREEN),
@@ -292,7 +320,8 @@ class VistaIngresoPi(ft.Container):
                     _btn("Restablecer", ft.Icons.RESTART_ALT, self._restablecer_problema, color="#374151"),
                 ], spacing=8, wrap=True),
                 self.status_text,
-            ], spacing=16, scroll=ft.ScrollMode.AUTO, expand=True, horizontal_alignment=ft.CrossAxisAlignment.START),
+            ], spacing=16, scroll=ft.ScrollMode.AUTO, expand=True,
+               horizontal_alignment=ft.CrossAxisAlignment.START),
             expand=True,
         )
 
@@ -333,7 +362,7 @@ class VistaIngresoPi(ft.Container):
         self.update()
 
     # ------------------------------------------------------------------
-    # Acciones de variables y restricciones
+    # Acciones
     # ------------------------------------------------------------------
 
     def _agregar_variable(self, _e) -> None:
@@ -341,7 +370,7 @@ class VistaIngresoPi(ft.Container):
         self.objective_fields.append(_campo(f"X{i+1}"))
         for fila in self.restriction_rows:
             fila["coeficientes"].append(_campo(f"X{i+1}"))
-        self.integer_checks.append(_nuevo_check(i, True))
+        self.tipo_var_dropdowns.append(_nuevo_tipo_dropdown(i, "Entera"))
         self._rebuild_content()
 
     def _eliminar_variable(self, _e) -> None:
@@ -350,8 +379,8 @@ class VistaIngresoPi(ft.Container):
             for fila in self.restriction_rows:
                 if fila["coeficientes"]:
                     fila["coeficientes"].pop()
-            if self.integer_checks:
-                self.integer_checks.pop()
+            if self.tipo_var_dropdowns:
+                self.tipo_var_dropdowns.pop()
             self._rebuild_content()
         else:
             self._set_status("No puedes eliminar la última variable.", RED)
@@ -382,18 +411,18 @@ class VistaIngresoPi(ft.Container):
     def _restaurar_problema(self, _e) -> None:
         self.objective_fields = []
         self.restriction_rows = []
-        self.integer_checks = []
+        self.tipo_var_dropdowns = []
         self._build_initial_form()
         self._rebuild_content()
 
     def _restablecer_problema(self, _e) -> None:
         self.objective_fields = []
         self.restriction_rows = []
-        self.integer_checks = []
+        self.tipo_var_dropdowns = []
         self.tipo_dropdown.value = "MAX"
         for i in range(2):
             self.objective_fields.append(_campo(f"X{i+1}"))
-            self.integer_checks.append(_nuevo_check(i, True))
+            self.tipo_var_dropdowns.append(_nuevo_tipo_dropdown(i, "Entera"))
         self.restriction_rows.append(self._crear_fila_restriccion(0))
         self._rebuild_content()
 
@@ -402,6 +431,7 @@ class VistaIngresoPi(ft.Container):
     # ------------------------------------------------------------------
 
     def _armar_diccionario_entrada(self) -> dict:
+        tipos = [dd.value or "Entera" for dd in self.tipo_var_dropdowns]
         return {
             "tipo": self.tipo_dropdown.value or "MAX",
             "objetivo": [self._parse_numeric(c.value) for c in self.objective_fields],
@@ -413,7 +443,10 @@ class VistaIngresoPi(ft.Container):
                 }
                 for fila in self.restriction_rows
             ],
-            "enteras": [bool(chk.value) for chk in self.integer_checks],
+            # Clave nueva para el solver
+            "tipos_var": tipos,
+            # Compatibilidad con solver que aún use "enteras" (bool list)
+            "enteras": [t in ("Entera", "Binaria") for t in tipos],
         }
 
     def _guardar_problema(self, _e) -> None:
