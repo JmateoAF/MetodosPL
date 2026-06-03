@@ -205,19 +205,26 @@ class VistaIngresoPi(ft.Container):
     # Sección de variables enteras
     # ------------------------------------------------------------------
 
+    def _build_integer_rows(self) -> list[ft.Row]:
+        rows: list[ft.Row] = []
+        max_per_row = 11
+        for i in range(0, len(self.integer_checks), max_per_row):
+            rows.append(ft.Row(self.integer_checks[i:i + max_per_row], spacing=16, tight=True))
+        return rows
+
     def _build_integer_section(self) -> ft.Container:
         return ft.Container(
             content=ft.Column([
                 ft.Row([
                     ft.Icon(ft.Icons.FUNCTIONS, size=14, color=ACCENT_COLOR),
                     ft.Text("Variables enteras", size=13, weight=ft.FontWeight.BOLD, color=TEXT_PRIMARY),
-                ], spacing=6),
+                ], spacing=6, tight=True),
                 ft.Text(
-                    "Marca las variables que deben tomar valores enteros.",
+                    "Marca las variables que deben tomar valores enteras.",
                     size=11, color=TEXT_MUTED,
                 ),
-                ft.Row(self.integer_checks, wrap=False, spacing=16),
-            ], spacing=10),
+                *self._build_integer_rows(),
+            ], spacing=10, tight=True, horizontal_alignment=ft.CrossAxisAlignment.START),
             padding=16,
             border_radius=12,
             bgcolor=BG_CARD,
@@ -285,7 +292,7 @@ class VistaIngresoPi(ft.Container):
                     _btn("Restablecer", ft.Icons.RESTART_ALT, self._restablecer_problema, color="#374151"),
                 ], spacing=8, wrap=True),
                 self.status_text,
-            ], spacing=16, scroll=ft.ScrollMode.AUTO, expand=True),
+            ], spacing=16, scroll=ft.ScrollMode.AUTO, expand=True, horizontal_alignment=ft.CrossAxisAlignment.START),
             expand=True,
         )
 
