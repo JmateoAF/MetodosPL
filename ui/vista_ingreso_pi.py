@@ -63,13 +63,21 @@ def _seccion(titulo: str, contenido: ft.Control) -> ft.Container:
     )
 
 
-class VistaIngreso(ft.Container):
+def _nuevo_check(indice: int, valor: bool = True) -> ft.Checkbox:
+    return ft.Checkbox(
+        label=f"X{indice + 1} ∈ ℤ",
+        value=valor,
+        active_color=ACCENT_COLOR,
+    )
+
+
+class VistaIngresoPi(ft.Container):
     def __init__(
         self,
         controlador,
         navegar_a=None,
         problema_inicial: dict | None = None,
-        cambiar_modo=None,          # ← callback a NavigationApp.cambiar_modo
+        cambiar_modo=None,          # callback a NavigationApp.cambiar_modo
     ) -> None:
         super().__init__(expand=True, padding=0, bgcolor="transparent")
         self.controlador = controlador
@@ -92,6 +100,7 @@ class VistaIngreso(ft.Container):
         self.status_text = ft.Text("", size=12, visible=False)
         self.objective_fields: list[ft.TextField] = []
         self.restriction_rows: list[dict] = []
+        self.integer_checks: list[ft.Checkbox] = []    # uno por variable
         self._build_initial_form()
         self.content = self._build_layout()
 
@@ -111,37 +120,42 @@ class VistaIngreso(ft.Container):
             content=ft.Row([
                 ft.Text("Modo:", size=11, color=TEXT_MUTED, weight=ft.FontWeight.W_500),
                 _modo_btn(
-                    "Programación Lineal", activo=True,
-                    on_click=lambda _e: None,           # ya está en LP
+                    "Programación Lineal", activo=False,
+                    on_click=lambda _e: self.cambiar_modo_cb("LP") if self.cambiar_modo_cb else None,
                 ),
                 _modo_btn(
-                    "Programación Lineal Entera", activo=False,
-                    on_click=lambda _e: self.cambiar_modo_cb("PI") if self.cambiar_modo_cb else None,
+                    "Programación Lineal Entera", activo=True,
+                    on_click=lambda _e: None,           # ya está en PI
                 ),
             ], spacing=8),
             padding=10,
             border_radius=8,
             bgcolor=BG_CARD,
             border=ft.Border(
-                top=ft.BorderSide(1, BORDER_COLOR),
-                bottom=ft.BorderSide(1, BORDER_COLOR),
-                left=ft.BorderSide(1, BORDER_COLOR),
-                right=ft.BorderSide(1, BORDER_COLOR),
+                top=ft.BorderSide(1, "#374151"),
+                bottom=ft.BorderSide(1, "#374151"),
+                left=ft.BorderSide(1, "#374151"),
+                right=ft.BorderSide(1, "#374151"),
             ),
         )
 
     # ------------------------------------------------------------------
-    # Formulario
+    # Formulario inicial
     # ------------------------------------------------------------------
 
     def _build_initial_form(self) -> None:
         objetivo = list((self.problema_inicial or {}).get("objetivo", []) or [])
         restricciones = list((self.problema_inicial or {}).get("restricciones", []) or [])
+        enteras = list((self.problema_inicial or {}).get("enteras", []) or [])
         num_variables = max(len(objetivo), 2)
         num_restricciones = max(len(restricciones), 1)
+
         for i in range(num_variables):
             valor = objetivo[i] if i < len(objetivo) else ""
             self.objective_fields.append(_campo(f"X{i+1}", valor))
+            es_entera = bool(enteras[i]) if i < len(enteras) else True
+            self.integer_checks.append(_nuevo_check(i, es_entera))
+
         for i in range(num_restricciones):
             r = restricciones[i] if i < len(restricciones) else {}
             self.restriction_rows.append(self._crear_fila_restriccion(i, r))
@@ -187,6 +201,38 @@ class VistaIngreso(ft.Container):
             except Exception:
                 return 0
 
+    # ------------------------------------------------------------------
+    # Sección de variables enteras
+    # ------------------------------------------------------------------
+
+    def _build_integer_section(self) -> ft.Container:
+        return ft.Container(
+            content=ft.Column([
+                ft.Row([
+                    ft.Icon(ft.Icons.FUNCTIONS, size=14, color=ACCENT_COLOR),
+                    ft.Text("Variables enteras", size=13, weight=ft.FontWeight.BOLD, color=TEXT_PRIMARY),
+                ], spacing=6),
+                ft.Text(
+                    "Marca las variables que deben tomar valores enteros.",
+                    size=11, color=TEXT_MUTED,
+                ),
+                ft.Row(self.integer_checks, wrap=False, spacing=16),
+            ], spacing=10),
+            padding=16,
+            border_radius=12,
+            bgcolor=BG_CARD,
+            border=ft.Border(
+                top=ft.BorderSide(1, "#374151"),
+                bottom=ft.BorderSide(1, "#374151"),
+                left=ft.BorderSide(1, "#374151"),
+                right=ft.BorderSide(1, "#374151"),
+            ),
+        )
+
+    # ------------------------------------------------------------------
+    # Layout principal
+    # ------------------------------------------------------------------
+
     def _build_layout(self) -> ft.Control:
         # Función objetivo
         fo_controls = [ft.Text("Z =", color=TEXT_MUTED, size=13)]
@@ -226,10 +272,11 @@ class VistaIngreso(ft.Container):
                 # ── Encabezado ──────────────────────────────────────
                 ft.Column([
                     ft.Text("Ingresar Problema", size=20, weight=ft.FontWeight.BOLD, color=TEXT_PRIMARY),
-                    ft.Text("Define la función objetivo y las restricciones.", size=12, color=TEXT_MUTED),
+                    ft.Text("Define función objetivo, variables enteras y restricciones.", size=12, color=TEXT_MUTED),
                 ], spacing=2),
                 ft.Divider(color=BORDER_COLOR, height=1),
                 fo_section,
+                self._build_integer_section(),  # ← sección exclusiva PI
                 rest_section,
                 ft.Row([
                     _btn("Guardar problema", ft.Icons.SAVE, self._guardar_problema, color=GREEN),
@@ -266,7 +313,7 @@ class VistaIngreso(ft.Container):
         )
 
     # ------------------------------------------------------------------
-    # Helpers de estado y rebuild
+    # Helpers
     # ------------------------------------------------------------------
 
     def _set_status(self, mensaje: str, color: str) -> None:
@@ -287,6 +334,7 @@ class VistaIngreso(ft.Container):
         self.objective_fields.append(_campo(f"X{i+1}"))
         for fila in self.restriction_rows:
             fila["coeficientes"].append(_campo(f"X{i+1}"))
+        self.integer_checks.append(_nuevo_check(i, True))
         self._rebuild_content()
 
     def _eliminar_variable(self, _e) -> None:
@@ -295,6 +343,8 @@ class VistaIngreso(ft.Container):
             for fila in self.restriction_rows:
                 if fila["coeficientes"]:
                     fila["coeficientes"].pop()
+            if self.integer_checks:
+                self.integer_checks.pop()
             self._rebuild_content()
         else:
             self._set_status("No puedes eliminar la última variable.", RED)
@@ -325,16 +375,24 @@ class VistaIngreso(ft.Container):
     def _restaurar_problema(self, _e) -> None:
         self.objective_fields = []
         self.restriction_rows = []
+        self.integer_checks = []
         self._build_initial_form()
         self._rebuild_content()
 
     def _restablecer_problema(self, _e) -> None:
         self.objective_fields = []
         self.restriction_rows = []
+        self.integer_checks = []
         self.tipo_dropdown.value = "MAX"
-        self.objective_fields.append(_campo("X1"))
+        for i in range(2):
+            self.objective_fields.append(_campo(f"X{i+1}"))
+            self.integer_checks.append(_nuevo_check(i, True))
         self.restriction_rows.append(self._crear_fila_restriccion(0))
         self._rebuild_content()
+
+    # ------------------------------------------------------------------
+    # Guardar
+    # ------------------------------------------------------------------
 
     def _armar_diccionario_entrada(self) -> dict:
         return {
@@ -348,6 +406,7 @@ class VistaIngreso(ft.Container):
                 }
                 for fila in self.restriction_rows
             ],
+            "enteras": [bool(chk.value) for chk in self.integer_checks],
         }
 
     def _guardar_problema(self, _e) -> None:
