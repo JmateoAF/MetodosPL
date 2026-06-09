@@ -85,3 +85,19 @@ class HistorialDeProblemas:
             La entidad del problema que acaba de ser removida.
         """
         return self._historial_de_problemas.pop(indice)
+    
+    def es_indice_valido(self, indice: int) -> bool:
+        """
+        Verifica si un índice posicional existe dentro del rango actual del historial.
+
+        Parámetros
+        ----------
+        indice : int
+            Posición del elemento que se desea verificar si existe
+
+        Retorna
+        -------
+        boool
+            un booleano indicando si ese indice es valido o no
+        """
+        return 0 <= indice < len(self._historial_de_problemas)
