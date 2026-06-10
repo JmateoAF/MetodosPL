@@ -47,62 +47,61 @@ class CoeficienteMGrande:
         return f"{self.constante_real} {termino_m}".strip()
 
 
-    class AnalizadorMatematico:
+class AnalizadorMatematico:
+    """
+    Procesador funcional estático para la conversión y análisis de estructuras
+    numéricas complejas dentro de las iteraciones matriciales.
+    """
+
+    VALOR_M_REFERENCIA: Fraction = Fraction(10 ** 9, 1)
+
+    @classmethod
+    def extraer_componente_m(cls, valor: Fraction) -> CoeficienteMGrande:
         """
-        Procesador funcional estático para la conversión y análisis de estructuras
-        numéricas complejas dentro de las iteraciones matriciales.
+        Analiza un coeficiente fraccionario del Tableau y extrae algebraicamente 
+        la cantidad de veces que contiene la penalización M (10^9).
+
+        Ejemplo:
+            Fraction(2000000005, 1) -> CoeficienteMGrande(constante_real=5, cantidad_m=2) -> "5 + 2M"
         """
+        # Operaciones algebraicas exactas usando aritmética funcional fraccionaria
+        numerador = valor.numerator
+        denominador = valor.denominator
 
-        VALOR_M_REFERENCIA: Fraction = Fraction(10 ** 9, 1)
+        # Obtener el valor de M bajo el denominador actual
+        m_actual = cls.VALOR_M_REFERENCIA
 
-        @classmethod
-        def extraer_componente_m(cls, valor: Fraction) -> CoeficienteMGrande:
-            """
-            Analiza un coeficiente fraccionario del Tableau y extrae algebraicamente 
-            la cantidad de veces que contiene la penalización M (10^9).
+        # Calcular cuántas M enteras y fraccionarias están presentes
+        cantidad_m = Fraction(int(round(float(valor / m_actual))), 1)
+        constante_real = valor - (cantidad_m * m_actual)
 
-            Ejemplo:
-                Fraction(2000000005, 1) -> CoeficienteMGrande(constante_real=5, cantidad_m=2) -> "5 + 2M"
-            """
-            # Operaciones algebraicas exactas usando aritmética funcional fraccionaria
-            numerador = valor.numerator
-            denominador = valor.denominator
+        return CoeficienteMGrande(constante_real=constante_real, cantidad_m=cantidad_m)
 
-            # Obtener el valor de M bajo el denominador actual
-            m_actual = cls.VALOR_M_REFERENCIA
-
-            # Calcular cuántas M enteras y fraccionarias están presentes
-            cantidad_m = Fraction(int(round(float(valor / m_actual))), 1)
-            constante_real = valor - (cantidad_m * m_actual)
-
-            return CoeficienteMGrande(constante_real=constante_real, cantidad_m=cantidad_m)
-
-        @classmethod
-        def formatear_valor_pedagogico(cls, valor: NumericoTabular, evaluar_m: bool = False) -> str:
-            """
-            Toma un valor numérico del motor matemático y lo simplifica a su forma
-            más limpia y elegante para ser renderizado en las celdas de la UI.
+    @classmethod
+    def formatear_valor_pedagogico(cls, valor: NumericoTabular, evaluar_m: bool = False) -> str:
+        """
+        Toma un valor numérico del motor matemático y lo simplifica a su forma
+        más limpia y elegante para ser renderizado en las celdas de la UI.
+        
+        - Si es una fracción con denominador 1, muestra el entero.
+        - Si es un flotante redondo, elimina los decimales innecesarios.
+        - Si evaluar_m es True, traduce las cantidades gigantescas a notación "M".
+        """
+        if isinstance(valor, Fraction):
+            # Forzar la simplificación interna nativa de la biblioteca fractions
+            fraccion_simplificada = valor.limit_denominator()
             
-            - Si es una fracción con denominador 1, muestra el entero.
-            - Si es un flotante redondo, elimina los decimales innecesarios.
-            - Si evaluar_m es True, traduce las cantidades gigantescas a notación "M".
-            """
-            if isinstance(valor, Fraction):
-                # Forzar la simplificación interna nativa de la biblioteca fractions
-                fraccion_simplificada = valor.limit_denominator()
-                
-                if evaluar_m and abs(fraccion_simplificada) >= cls.VALOR_M_REFERENCIA / 10:
-                    return str(cls.extraer_componente_m(fraccion_simplificada))
+            if evaluar_m and abs(fraccion_simplificada) >= cls.VALOR_M_REFERENCIA / 10:
+                return str(cls.extraer_componente_m(fraccion_simplificada))
 
-                if fraccion_simplificada.denominator == 1:
-                    return str(fraccion_simplificada.numerator)
-                return f"{fraccion_simplificada.numerator}/{fraccion_simplificada.denominator}"
+            if fraccion_simplificada.denominator == 1:
+                return str(fraccion_simplificada.numerator)
+            return f"{fraccion_simplificada.numerator}/{fraccion_simplificada.denominator}"
 
-            if isinstance(valor, (int, float)):
-                valor_float = float(valor)
-                if valor_float.is_integer():
-                    return str(int(valor_float))
-                return f"{valor_float:.4f}".rstrip('0').rstrip('.')
+        if isinstance(valor, (int, float)):
+            valor_float = float(valor)
+            if valor_float.is_integer():
+                return str(int(valor_float))
+            return f"{valor_float:.4f}".rstrip('0').rstrip('.')
 
-            return str(valor)
-    
+        return str(valor)
