@@ -11,6 +11,7 @@ import flet as ft
 from src.models.entity.programacion_lineal.enums import EstadoProblema, TipoOptimizacion
 from src.models.entity.programacion_lineal.problema import ProblemaPL
 from src.models.entity.programacion_lineal.respuesta import RespuestaSciPyPL
+from src.controller.controlador_lineal import ControladorLineal
 
 # Paleta de colores institucional
 ACCENT_COLOR: str = "#7c3aed"
@@ -73,179 +74,169 @@ def _crear_tarjeta_metrica_ui(titulo: str, valor: str, color_hex: str) -> ft.Con
     )
 
 
-class VistaGeneral(ft.Column):
+def _crear_alerta_status(mensaje: str, color_hex: str, icono: ft.Icons = ft.Icons.WARNING_AMBER) -> ft.Row:
+    return ft.Row([
+        ft.Container(
+            content=ft.Row([ft.Icon(icono, color=color_hex, size=15), ft.Text(mensaje, color=color_hex, size=12)], spacing=8),
+            padding=14,
+            border_radius=8,
+            bgcolor=color_hex + "18",
+            border=ft.Border(
+                top=ft.BorderSide(1, color_hex + "44"), bottom=ft.BorderSide(1, color_hex + "44"),
+                left=ft.BorderSide(1, color_hex + "44"), right=ft.BorderSide(1, color_hex + "44")
+            ),
+        )
+    ])
 
-    def __init__(self, controlador) -> None:
-        super().__init__(expand=True, spacing=16, scroll=ft.ScrollMode.AUTO)
-        self.controlador = controlador
-        
-        self.status_row: ft.Row = ft.Row([], visible=False)
-        self.resultado_container: ft.Column = ft.Column(spacing=12)
 
-        self.controls = [
-            ft.Column([
-                ft.Text("Solución Rápida", size=20, weight=ft.FontWeight.BOLD, color=TEXT_PRIMARY),
-                ft.Text("Resultado óptimo global calculado de forma analítica mediante algoritmos HiGHS de alto rendimiento.", size=12, color=TEXT_MUTED),
-            ], spacing=2),
-            ft.Divider(color=BORDER_COLOR, height=1),
-            self.status_row,
-            self.resultado_container,
-        ]
-        self.refresh()
+@ft.component
+def VistaGeneral(controlador: ControladorLineal):
+    problema: Optional[ProblemaPL] = controlador.problema_activo
 
-    def _mostrar_alerta_status(self, mensaje: str, color_hex: str, icono: ft.Icons = ft.Icons.WARNING_AMBER) -> None:
-        self.status_row.visible = True
-        self.status_row.controls = [
-            ft.Container(
-                content=ft.Row([ft.Icon(icono, color=color_hex, size=15), ft.Text(mensaje, color=color_hex, size=12)], spacing=8),
-                padding=14,
-                border_radius=8,
-                bgcolor=color_hex + "18",
-                border=ft.Border(
-                    top=ft.BorderSide(1, color_hex + "44"), bottom=ft.BorderSide(1, color_hex + "44"),
-                    left=ft.BorderSide(1, color_hex + "44"), right=ft.BorderSide(1, color_hex + "44")
-                ),
-            )
-        ]
+    header = ft.Column([
+        ft.Text("Solución Rápida", size=20, weight=ft.FontWeight.BOLD, color=TEXT_PRIMARY),
+        ft.Text("Resultado óptimo global calculado de forma analítica mediante algoritmos HiGHS de alto rendimiento.", size=12, color=TEXT_MUTED),
+    ], spacing=2)
 
-    def refresh(self) -> None:
-        problema: Optional[ProblemaPL] = self.controlador.problema_activo
+    # 1. Caso sin problema activo
+    if problema is None:
+        status_row = _crear_alerta_status("No se encuentra ningún modelo lineal activo. Ingresa parámetros primero.", AMBER, ft.Icons.INFO_OUTLINE)
+        placeholder = ft.Container(
+            content=ft.Column(
+                [
+                    ft.Icon(ft.Icons.CALCULATE, color=TEXT_MUTED, size=48),
+                    ft.Text("Esperando un modelo matemático activo...", color=TEXT_MUTED, size=13, text_align=ft.TextAlign.CENTER),
+                ],
+                spacing=10,
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER
+            ),
+            padding=48, border_radius=12, bgcolor=BG_CARD,
+            border=ft.Border(top=ft.BorderSide(1, BORDER_COLOR), bottom=ft.BorderSide(1, BORDER_COLOR), left=ft.BorderSide(1, BORDER_COLOR), right=ft.BorderSide(1, BORDER_COLOR)),
+            alignment=ft.alignment.Alignment(0, 0),
+        )
+        return ft.Column(
+            [header, ft.Divider(color=BORDER_COLOR, height=1), status_row, placeholder],
+            expand=True, spacing=16, scroll=ft.ScrollMode.AUTO
+        )
 
-        if problema is None:
-            self._mostrar_alerta_status("No se encuentra ningún modelo lineal activo. Ingresa parámetros primero.", AMBER, ft.Icons.INFO_OUTLINE)
-            self.resultado_container.controls = [
-                ft.Container(
-                    content=ft.Column(
-                        [
-                            ft.Icon(ft.Icons.CALCULATE, color=TEXT_MUTED, size=48),
-                            ft.Text("Esperando un modelo matemático activo...", color=TEXT_MUTED, size=13, text_align=ft.TextAlign.CENTER),
-                        ],
-                        spacing=10,
-                        horizontal_alignment=ft.CrossAxisAlignment.CENTER
-                    ),
-                    padding=48, border_radius=12, bgcolor=BG_CARD,
-                    border=ft.Border(top=ft.BorderSide(1, BORDER_COLOR), bottom=ft.BorderSide(1, BORDER_COLOR), left=ft.BorderSide(1, BORDER_COLOR), right=ft.BorderSide(1, BORDER_COLOR)),
-                    alignment=ft.alignment.Alignment(0, 0),
-                )
-            ]
-            self._safe_update_ui()
-            return
+    # 2. Resolver problema
+    resultado: Optional[RespuestaSciPyPL] = controlador.resolver_LP(problema, 1)
 
-        resultado: Optional[RespuestaSciPyPL] = self.controlador.resolver_LP(problema, 1)
+    # 3. Caso sin convergencia óptima
+    if resultado is None or resultado.estado != EstadoProblema.OPTIMO:
+        mensaje_error = resultado.mensaje if resultado is not None else "Respuesta del motor de cálculo nula."
+        status_row = _crear_alerta_status("El modelo ingresado no posee una convergencia óptima.", AMBER, ft.Icons.ERROR_OUTLINE)
+        error_container = ft.Container(
+            content=ft.Text(mensaje_error, color=AMBER, text_align=ft.TextAlign.CENTER, weight=ft.FontWeight.W_500),
+            padding=20, border_radius=12, bgcolor=BG_CARD,
+            border=ft.Border(top=ft.BorderSide(1, AMBER + "44"), bottom=ft.BorderSide(1, AMBER + "44"), left=ft.BorderSide(1, AMBER + "44"), right=ft.BorderSide(1, AMBER + "44")),
+        )
+        return ft.Column(
+            [header, ft.Divider(color=BORDER_COLOR, height=1), status_row, error_container],
+            expand=True, spacing=16, scroll=ft.ScrollMode.AUTO
+        )
 
-        if resultado is None or resultado.estado != EstadoProblema.OPTIMO:
-            mensaje_error = resultado.mensaje if resultado is not None else "Respuesta del motor de cálculo nula."
-            self._mostrar_alerta_status("El modelo ingresado no posee una convergencia óptima.", AMBER, ft.Icons.ERROR_OUTLINE)
-            self.resultado_container.controls = [
-                ft.Container(
-                    content=ft.Text(mensaje_error, color=AMBER, text_align=ft.TextAlign.CENTER, weight=ft.FontWeight.W_500),
-                    padding=20, border_radius=12, bgcolor=BG_CARD,
-                    border=ft.Border(top=ft.BorderSide(1, AMBER + "44"), bottom=ft.BorderSide(1, AMBER + "44"), left=ft.BorderSide(1, AMBER + "44"), right=ft.BorderSide(1, AMBER + "44")),
-                )
-            ]
-            self._safe_update_ui()
-            return
+    # 4. Caso óptimo exitoso
+    status_row = _crear_alerta_status("Optimización completada con éxito matemático absoluto.", GREEN, ft.Icons.CHECK_CIRCLE)
 
-        self._mostrar_alerta_status("Optimización completada con éxito matemático absoluto.", GREEN, ft.Icons.CHECK_CIRCLE)
+    fo_formateada = _formatear_funcion_objetivo_ui(problema.tipo, problema.objetivo)
+    z_optimo_str = _formatear_valor_numerico(resultado.fun)
+    vector_solucion: List[float] = resultado.x if resultado.x is not None else []
+    vector_holguras: List[float] = resultado.slack if resultado.slack is not None else []
 
-        fo_formateada = _formatear_funcion_objetivo_ui(problema.tipo, problema.objetivo)
-        z_optimo_str = _formatear_valor_numerico(resultado.fun)
-        vector_solucion: List[float] = resultado.x if resultado.x is not None else []
-        vector_holguras: List[float] = resultado.slack if resultado.slack is not None else []
+    # --- Bloque 1: Tarjetas de Métricas Globales ---
+    tarjetas_metricas = ft.Row(
+        [
+            _crear_tarjeta_metrica_ui("Valor Óptimo Z", z_optimo_str, GREEN),
+            _crear_tarjeta_metrica_ui("Iteraciones Ejecutadas", str(resultado.nit), BLUE),
+            _crear_tarjeta_metrica_ui("Variables / Restr.", f"{problema.total_variables} / {problema.total_restricciones}", AMBER),
+        ],
+        spacing=10
+    )
 
-        # --- Bloque 1: Tarjetas de Métricas Globales (Incluye el nuevo dato extra 'nit') ---
-        tarjetas_metricas = ft.Row(
+    # --- Bloque 2: Desglose de las Variables de Decisión Óptimas ---
+    tarjeta_valores_variables = ft.Container(
+        content=ft.Column(
             [
-                _crear_tarjeta_metrica_ui("Valor Óptimo Z", z_optimo_str, GREEN),
-                _crear_tarjeta_metrica_ui("Iteraciones Ejecutadas", str(resultado.nit), BLUE),  # ← NUEVO DATO EXTRA EXPUESTO
-                _crear_tarjeta_metrica_ui("Variables / Restr.", f"{problema.total_variables} / {problema.total_restricciones}", AMBER),
+                ft.Text("Variables de Decisión Óptimas", size=12, color=TEXT_MUTED, weight=ft.FontWeight.W_500),
+                ft.Row(
+                    [
+                        ft.Container(
+                            content=ft.Column(
+                                [
+                                    ft.Text(f"X{i+1}", size=11, color=TEXT_MUTED),
+                                    ft.Text(_formatear_valor_numerico(v), size=16, color=TEXT_PRIMARY, weight=ft.FontWeight.BOLD),
+                                ],
+                                spacing=2, horizontal_alignment=ft.CrossAxisAlignment.CENTER
+                            ),
+                            padding=16, border_radius=8, bgcolor="#1e2130",
+                            border=ft.Border(top=ft.BorderSide(1, BORDER_COLOR), bottom=ft.BorderSide(1, BORDER_COLOR), left=ft.BorderSide(1, BORDER_COLOR), right=ft.BorderSide(1, BORDER_COLOR)),
+                        )
+                        for i, v in enumerate(vector_solucion)
+                    ],
+                    wrap=True, spacing=8
+                ),
             ],
             spacing=10
-        )
+        ),
+        padding=16, border_radius=12, bgcolor=BG_CARD,
+        border=ft.Border(top=ft.BorderSide(1, BORDER_COLOR), bottom=ft.BorderSide(1, BORDER_COLOR), left=ft.BorderSide(1, BORDER_COLOR), right=ft.BorderSide(1, BORDER_COLOR)),
+    )
 
-        # --- Bloque 2: Desglose de las Variables de Decisión Óptimas ---
-        tarjeta_valores_variables = ft.Container(
-            content=ft.Column(
-                [
-                    ft.Text("Variables de Decisión Óptimas", size=12, color=TEXT_MUTED, weight=ft.FontWeight.W_500),
-                    ft.Row(
-                        [
-                            ft.Container(
-                                content=ft.Column(
-                                    [
-                                        ft.Text(f"X{i+1}", size=11, color=TEXT_MUTED),
-                                        ft.Text(_formatear_valor_numerico(v), size=16, color=TEXT_PRIMARY, weight=ft.FontWeight.BOLD),
-                                    ],
-                                    spacing=2, horizontal_alignment=ft.CrossAxisAlignment.CENTER
-                                ),
-                                padding=16, border_radius=8, bgcolor="#1e2130",
-                                border=ft.Border(top=ft.BorderSide(1, BORDER_COLOR), bottom=ft.BorderSide(1, BORDER_COLOR), left=ft.BorderSide(1, BORDER_COLOR), right=ft.BorderSide(1, BORDER_COLOR)),
-                            )
-                            for i, v in enumerate(vector_solucion)
-                        ],
-                        wrap=True, spacing=8
-                    ),
-                ],
-                spacing=10
-            ),
-            padding=16, border_radius=12, bgcolor=BG_CARD,
-            border=ft.Border(top=ft.BorderSide(1, BORDER_COLOR), bottom=ft.BorderSide(1, BORDER_COLOR), left=ft.BorderSide(1, BORDER_COLOR), right=ft.BorderSide(1, BORDER_COLOR)),
-        )
+    # --- Bloque 3: Desglose de Variables de Holgura y Exceso ---
+    controles_holguras = []
+    if vector_holguras:
+        controles_holguras = [
+            ft.Container(
+                content=ft.Column(
+                    [
+                        ft.Text(f"Holgura S{j+1}", size=11, color=TEXT_MUTED),
+                        ft.Text(_formatear_valor_numerico(h), size=14, color=AMBER if float(h) > 0 else TEXT_MUTED, weight=ft.FontWeight.BOLD),
+                    ],
+                    spacing=2, horizontal_alignment=ft.CrossAxisAlignment.CENTER
+                ),
+                padding=12, border_radius=8, bgcolor="#1a1c29",
+                border=ft.Border(top=ft.BorderSide(1, BORDER_COLOR), bottom=ft.BorderSide(1, BORDER_COLOR), left=ft.BorderSide(1, BORDER_COLOR), right=ft.BorderSide(1, BORDER_COLOR)),
+            )
+            for j, h in enumerate(vector_holguras)
+        ]
+    
+    tarjeta_valores_holguras = ft.Container(
+        content=ft.Column(
+            [
+                ft.Text("Variables de Holgura / Exceso (Slack)", size=12, color=TEXT_MUTED, weight=ft.FontWeight.W_500),
+                ft.Row(controles_holguras, wrap=True, spacing=8) if controles_holguras else ft.Text("No aplican holguras para este modelo.", size=11, color=TEXT_MUTED, italic=True),
+            ],
+            spacing=10
+        ),
+        padding=16, border_radius=12, bgcolor=BG_CARD,
+        border=ft.Border(top=ft.BorderSide(1, BORDER_COLOR), bottom=ft.BorderSide(1, BORDER_COLOR), left=ft.BorderSide(1, BORDER_COLOR), right=ft.BorderSide(1, BORDER_COLOR)),
+    )
 
-        # --- Bloque 3: Desglose de Variables de Holgura y Exceso (NUEVO DATO EXTRA EXPUESTO) ---
-        controles_holguras = []
-        if vector_holguras:
-            controles_holguras = [
-                ft.Container(
-                    content=ft.Column(
-                        [
-                            ft.Text(f"Holgura S{j+1}", size=11, color=TEXT_MUTED),
-                            ft.Text(_formatear_valor_numerico(h), size=14, color=AMBER if float(h) > 0 else TEXT_MUTED, weight=ft.FontWeight.BOLD),
-                        ],
-                        spacing=2, horizontal_alignment=ft.CrossAxisAlignment.CENTER
-                    ),
-                    padding=12, border_radius=8, bgcolor="#1a1c29",
-                    border=ft.Border(top=ft.BorderSide(1, BORDER_COLOR), bottom=ft.BorderSide(1, BORDER_COLOR), left=ft.BorderSide(1, BORDER_COLOR), right=ft.BorderSide(1, BORDER_COLOR)),
-                )
-                for j, h in enumerate(vector_holguras)
-            ]
-        
-        tarjeta_valores_holguras = ft.Container(
-            content=ft.Column(
-                [
-                    ft.Text("Variables de Holgura / Exceso (Slack)", size=12, color=TEXT_MUTED, weight=ft.FontWeight.W_500),
-                    ft.Row(controles_holguras, wrap=True, spacing=8) if controles_holguras else ft.Text("No aplican holguras para este modelo.", size=11, color=TEXT_MUTED, italic=True),
-                ],
-                spacing=10
-            ),
-            padding=16, border_radius=12, bgcolor=BG_CARD,
-            border=ft.Border(top=ft.BorderSide(1, BORDER_COLOR), bottom=ft.BorderSide(1, BORDER_COLOR), left=ft.BorderSide(1, BORDER_COLOR), right=ft.BorderSide(1, BORDER_COLOR)),
-        )
+    # --- Bloque 4: Esqueleto de Ecuación Matemática ---
+    tarjeta_fo = ft.Container(
+        content=ft.Column(
+            [
+                ft.Text(fo_formateada, size=14, color=TEXT_PRIMARY, weight=ft.FontWeight.W_600, selectable=True),
+                ft.Text(f"Mensaje del motor: {resultado.message}", size=11, color=TEXT_MUTED, italic=True)
+            ],
+            spacing=6
+        ),
+        padding=16, border_radius=12, bgcolor=BG_CARD,
+        border=ft.Border(top=ft.BorderSide(1, ACCENT_COLOR + "66"), bottom=ft.BorderSide(1, ACCENT_COLOR + "66"), left=ft.BorderSide(1, ACCENT_COLOR + "66"), right=ft.BorderSide(1, ACCENT_COLOR + "66")),
+    )
 
-        # --- Bloque 4: Esqueleto de Ecuación Matemática ---
-        tarjeta_fo = ft.Container(
-            content=ft.Column(
-                [
-                    ft.Text(fo_formateada, size=14, color=TEXT_PRIMARY, weight=ft.FontWeight.W_600, selectable=True),
-                    ft.Text(f"Mensaje del motor: {resultado.message}", size=11, color=TEXT_MUTED, italic=True)
-                ],
-                spacing=6
-            ),
-            padding=16, border_radius=12, bgcolor=BG_CARD,
-            border=ft.Border(top=ft.BorderSide(1, ACCENT_COLOR + "66"), bottom=ft.BorderSide(1, ACCENT_COLOR + "66"), left=ft.BorderSide(1, ACCENT_COLOR + "66"), right=ft.BorderSide(1, ACCENT_COLOR + "66")),
-        )
-
-        # Inyección completa de todos los paneles en la UI
-        self.resultado_container.controls = [tarjeta_fo, tarjetas_metricas, tarjeta_valores_variables, tarjeta_valores_holguras]
-        self._safe_update_ui()
-
-    def _safe_update_ui(self) -> None:
-        try:
-            if self.page is not None:
-                self.update()
-        except RuntimeError:
-            pass
-
-    def build(self) -> ft.Control:
-        self.refresh()
-        return self
+    return ft.Column(
+        [
+            header,
+            ft.Divider(color=BORDER_COLOR, height=1),
+            status_row,
+            tarjeta_fo,
+            tarjetas_metricas,
+            tarjeta_valores_variables,
+            tarjeta_valores_holguras
+        ],
+        expand=True,
+        spacing=16,
+        scroll=ft.ScrollMode.AUTO
+    )

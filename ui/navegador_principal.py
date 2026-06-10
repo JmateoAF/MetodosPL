@@ -1,0 +1,64 @@
+"""
+navegador_principal.py
+======================
+Enrutador raíz de la aplicación. Maneja el cambio de contexto global entre
+las distintas familias de algoritmos (Lineal Continua vs Lineal Entera).
+"""
+
+import flet as ft
+from src.controller.controlador_principal import ControladorPrincipal
+from ui.programacion_lineal_basica.navegador_lineal import NavegadorLineal
+from ui.programacion_lineal_entera.navegador_entera import NavegadorEntera
+
+BG_MAIN = "#0f1117"
+
+@ft.component
+def NavegadorPrincipal(controlador_fachada: ControladorPrincipal):
+    selected_index, set_selected_index = ft.use_state(0)
+
+    # Cache sub-navigators to persist their internal navigation states
+    nav_lineal_ref = ft.use_ref(None)
+    if nav_lineal_ref.current is None:
+        nav_lineal_ref.current = NavegadorLineal(controlador_fachada.lineal)
+
+    nav_entera_ref = ft.use_ref(None)
+    if nav_entera_ref.current is None:
+        nav_entera_ref.current = NavegadorEntera(controlador_fachada.entera)
+
+    def cambiar_modulo(e: ft.ControlEvent) -> None:
+        """Conmuta el sub-enrutador activo según la pestaña seleccionada."""
+        indice = int(getattr(e.control, "selected_index", 0))
+        set_selected_index(indice)
+
+    tab_bar = ft.TabBar(
+        tabs=[
+            ft.Tab(label="Programación Lineal (Continua)", icon=ft.Icons.BAR_CHART),
+            ft.Tab(label="Programación Lineal Entera (PI)", icon=ft.Icons.ACCOUNT_TREE),
+        ]
+    )
+
+    active_content = nav_lineal_ref.current if selected_index == 0 else nav_entera_ref.current
+
+    return ft.Tabs(
+        content=ft.Column(
+            controls=[
+                ft.Container(
+                    content=tab_bar,
+                    padding=ft.Padding(left=20, top=10, right=20, bottom=0)
+                ),
+                ft.Divider(height=1, color="#1e2130"),
+                ft.Container(
+                    content=active_content,
+                    expand=True,
+                    bgcolor=BG_MAIN
+                )
+            ],
+            spacing=0,
+            expand=True
+        ),
+        length=2,
+        selected_index=selected_index,
+        on_change=cambiar_modulo,
+        animation_duration=300,
+        expand=True
+    )

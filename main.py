@@ -1,27 +1,20 @@
 import flet as ft
 
-# Main minimalista: inicializa Flet, configura tema oscuro y crea
-# la instancia global del Controlador. Toda la UI está en la carpeta ui/.
-from src.controller.controlador import Controlador
-from ui.navegacion import NavigationApp
-
+# Importación de la Fachada y el Enrutador Maestro
+from src.controller.controlador_principal import ControladorPrincipal
+from ui.navegador_principal import NavegadorPrincipal
 
 def main(page: ft.Page):
-    page.title = "Optimizador Lineal"
-    # Tema oscuro por defecto
+    page.title = "Optimizador Lineal MVC"
     page.theme_mode = ft.ThemeMode.DARK
-    # Aplicar color de acento (seed) tal como especifica indicaciones_gui.md
     page.theme = ft.Theme(color_scheme_seed="#4b2981")
 
-    page.update() 
+    # Instancia única de la Fachada que administrará a todos los sub-controladores
+    controlador_fachada = ControladorPrincipal()
 
-    # Instancia única y global del controlador (no crear más instancias en las vistas)
-    controlador = Controlador()
-
-    # Construir la navegación principal y montarla en la página
-    nav = NavigationApp(page, controlador)
-    page.add(nav.build())
-
+    # Arranque declarativo: delegamos el renderizado al componente NavegadorPrincipal
+    # sin necesidad de pasar 'page' ni usar page.add() o page.update()
+    page.render(lambda: NavegadorPrincipal(controlador_fachada))
 
 if __name__ == "__main__":
     ft.run(main)
