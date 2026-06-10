@@ -18,9 +18,9 @@ from typing import List, Optional, cast
 import flet as ft
 
 # Importaciones estrictas de las capas de Dominio y Utilidades del Sistema
-from src.models.entity.enums import TipoOptimizacion, SignoRestriccion
-from src.models.entity.problema import ProblemaPL, Restriccion
-from src.utils.parser import MotorParsing
+from src.models.entity.programacion_lineal.enums import TipoOptimizacion, SignoRestriccion
+from src.models.entity.programacion_lineal.problema import ProblemaPL, Restriccion
+from src.utils.programacion_lineal_basica.parser import MotorParsing
 
 # Paleta de colores institucional para mantener la consistencia estética neon/oscura
 ACCENT_COLOR: str = "#7c3aed"

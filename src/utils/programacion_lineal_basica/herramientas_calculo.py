@@ -14,8 +14,7 @@ Autor: Utilities Calculation Module — MVC Linear Optimizer
 
 from dataclasses import dataclass
 from fractions import Fraction
-from typing import Tuple
-from src.models.entity.respuesta import NumericoTabular
+from src.models.entity.programacion_lineal.respuesta import NumericoTabular
 
 
 @dataclass(frozen=True)

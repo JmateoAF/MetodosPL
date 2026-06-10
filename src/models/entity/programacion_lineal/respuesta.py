@@ -1,10 +1,10 @@
-# src/models/entity/respuesta.py
+# src/models/entity/programacion_lineal/respuesta.py
 
 from dataclasses import dataclass, field
 from fractions import Fraction
 from typing import List, Optional, Union
 import numpy as np
-from src.models.entity.enums import EstadoProblema
+from src.models.entity.programacion_lineal.enums import EstadoProblema
 
 # Tipo de dato estricto para valores numéricos algebraicos
 NumericoTabular = Union[int, float, Fraction]

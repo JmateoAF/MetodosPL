@@ -26,9 +26,9 @@ from matplotlib.figure import Figure
 from matplotlib.patches import Polygon
 
 # Importaciones estrictas de las entidades orientadas a objetos del dominio
-from src.models.entity.enums import EstadoProblema, SignoRestriccion
-from src.models.entity.problema import ProblemaPL, Restriccion
-from src.models.entity.respuesta import RespuestaSciPyPL
+from src.models.entity.programacion_lineal.enums import EstadoProblema, SignoRestriccion
+from src.models.entity.programacion_lineal.problema import ProblemaPL
+from src.models.entity.programacion_lineal.respuesta import RespuestaSciPyPL
 
 
 def _fig_to_base64(fig: Figure) -> str:

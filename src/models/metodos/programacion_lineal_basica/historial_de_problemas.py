@@ -13,7 +13,7 @@ Autor: Backend Module — MVC Linear Optimizer
 """
 
 from typing import List
-from src.models.entity.problema import ProblemaPL
+from src.models.entity.programacion_lineal.problema import ProblemaPL
 
 
 class HistorialDeProblemas:

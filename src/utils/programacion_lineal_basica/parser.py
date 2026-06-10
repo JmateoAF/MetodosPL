@@ -15,11 +15,11 @@ Autor: Utilities Parser Module — MVC Linear Optimizer
 
 import re
 from fractions import Fraction
-from typing import List, Tuple
+from typing import List
 
 # Importaciones estrictas de las entidades y enumerados de dominio
-from src.models.entity.enums import TipoOptimizacion, SignoRestriccion
-from src.models.entity.problema import ProblemaPL, Restriccion, Numerico
+from src.models.entity.programacion_lineal.enums import TipoOptimizacion, SignoRestriccion
+from src.models.entity.programacion_lineal.problema import ProblemaPL, Restriccion, Numerico
 
 
 class MotorParsing:

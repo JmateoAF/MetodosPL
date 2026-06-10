@@ -1,4 +1,4 @@
-# src/models/entity/enums.py
+# src/models/entity/programacion_lineal/enums.py
 
 from enum import Enum, unique
 

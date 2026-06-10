@@ -19,13 +19,13 @@ from typing import List, Optional
 import flet as ft
 
 # Importaciones estrictas de la capa de Dominio y Control del Sistema
-from src.models.entity.enums import EstadoProblema, TipoOptimizacion
-from src.models.entity.problema import ProblemaPL
-from src.models.entity.respuesta import RespuestaTabularPL, IteracionTabular
+from src.models.entity.programacion_lineal.enums import EstadoProblema, TipoOptimizacion
+from src.models.entity.programacion_lineal.problema import ProblemaPL
+from src.models.entity.programacion_lineal.respuesta import RespuestaTabularPL, IteracionTabular
 
 # Importaciones utilitarias para procesamiento geométrico y visual
-from src.utils.herramientas_calculo import AnalizadorMatematico
-from src.utils.localizador_ui import LocalizadorUI
+from src.utils.programacion_lineal_basica.herramientas_calculo import AnalizadorMatematico
+from src.utils.programacion_lineal_basica.localizador_ui import LocalizadorUI
 
 # Paleta de colores institucional para mantener la consistencia estética
 ACCENT_COLOR: str = "#7c3aed"

@@ -20,10 +20,10 @@ from typing import List, Optional
 import flet as ft
 
 # Importaciones estrictas de la capa de Dominio y Utilidades del Sistema
-from src.models.entity.enums import EstadoProblema, TipoOptimizacion
-from src.models.entity.problema import ProblemaPL
-from src.models.entity.respuesta import RespuestaSciPyPL
-from src.utils.graficador import generar_grafico_cartesiano
+from src.models.entity.programacion_lineal.enums import EstadoProblema, TipoOptimizacion
+from src.models.entity.programacion_lineal.problema import ProblemaPL
+from src.models.entity.programacion_lineal.respuesta import RespuestaSciPyPL
+from src.utils.programacion_lineal_basica.graficador import generar_grafico_cartesiano
 
 # Paleta de colores institucional para mantener la consistencia estética
 ACCENT_COLOR: str = "#7c3aed"

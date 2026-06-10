@@ -18,9 +18,9 @@ from scipy.optimize import linprog
 from typing import List, Tuple, Optional
 
 # Importaciones estrictas de las entidades de dominio orientadas a objetos
-from src.models.entity.enums import EstadoProblema, TipoOptimizacion, SignoRestriccion
-from src.models.entity.problema import ProblemaPL
-from src.models.entity.respuesta import RespuestaSciPyPL
+from src.models.entity.programacion_lineal.enums import EstadoProblema, TipoOptimizacion, SignoRestriccion
+from src.models.entity.programacion_lineal.problema import ProblemaPL
+from src.models.entity.programacion_lineal.respuesta import RespuestaSciPyPL
 
 
 class ResolutorGeneral:

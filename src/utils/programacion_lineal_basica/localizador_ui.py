@@ -1,6 +1,6 @@
 # src/utils/localizador_ui.py
 
-from src.models.entity.respuesta import IteracionTabular
+from src.models.entity.programacion_lineal.respuesta import IteracionTabular
 
 class LocalizadorUI:
     """Provee mapas de coordenadas visuales para asistir a las vistas en el resaltado de pivotes."""

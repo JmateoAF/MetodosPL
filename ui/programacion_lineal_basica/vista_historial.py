@@ -14,12 +14,12 @@ Autor: UI History View Module — MVC Linear Optimizer
 """
 
 from __future__ import annotations
-from typing import List, Optional
+from typing import List
 import flet as ft
 
 # Importaciones estrictas de la capa de Dominio del Sistema
-from src.models.entity.enums import TipoOptimizacion
-from src.models.entity.problema import ProblemaPL, Restriccion
+from src.models.entity.programacion_lineal.enums import TipoOptimizacion
+from src.models.entity.programacion_lineal.problema import ProblemaPL, Restriccion
 
 # Paleta de colores institucional para mantener la consistencia estética
 ACCENT_COLOR: str = "#7c3aed"

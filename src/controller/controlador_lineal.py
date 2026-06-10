@@ -1,6 +1,6 @@
-# src/controller/controlador.py
+# src/controller/controlador_lineal.py
 """
-controlador.py
+controlador_lineal.py
 ==============
 Capa del Controlador Central en la arquitectura MVC del optimizador lineal.
 
@@ -15,18 +15,18 @@ Autor: Central Controller Module — MVC Linear Optimizer
 from typing import List, Optional, Union
 
 # Importaciones de Solvers corregidas de acuerdo a la nueva jerarquía modular de la arquitectura POO
-from src.models.metodos.resolucion_rapida import ResolutorGeneral
-from src.models.metodos.simplex import SolucionadorSimplex
-from src.models.metodos.m_grande import SolucionadorGranM
-from src.models.metodos.dos_fases import SolucionadorDosFases
-from src.models.metodos.historial_de_problemas import HistorialDeProblemas
+from src.models.metodos.programacion_lineal_basica.resolucion_rapida import ResolutorGeneral
+from src.models.metodos.programacion_lineal_basica.simplex import SolucionadorSimplex
+from src.models.metodos.programacion_lineal_basica.m_grande import SolucionadorGranM
+from src.models.metodos.programacion_lineal_basica.dos_fases import SolucionadorDosFases
+from src.models.metodos.programacion_lineal_basica.historial_de_problemas import HistorialDeProblemas
 
 # Importaciones estrictas de las entidades inmutables del dominio de objetos
-from src.models.entity.problema import ProblemaPL
-from src.models.entity.respuesta import RespuestaSciPyPL, RespuestaTabularPL
+from src.models.entity.programacion_lineal.problema import ProblemaPL
+from src.models.entity.programacion_lineal.respuesta import RespuestaSciPyPL, RespuestaTabularPL
 
 
-class Controlador:
+class ControladorLineal:
     """
     Orquestador central y único punto de contacto para la ejecución de algoritmos 
     y persistencia de datos del dominio, operando de forma exclusiva bajo POO.

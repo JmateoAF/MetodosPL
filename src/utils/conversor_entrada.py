@@ -1,7 +1,7 @@
 # src/utils/conversor_entrada.py
 
 from fractions import Fraction
-from src.models.entity.respuesta import NumericoTabular
+from src.models.entity.programacion_lineal.respuesta import NumericoTabular
 
 class ConversorEntrada:
     """Transforma entradas textuales crudas de la UI a objetos numéricos puros con tipado estático."""

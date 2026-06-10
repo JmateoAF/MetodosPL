@@ -1,9 +1,9 @@
-# src/models/entity/problema.py
+# src/models/entity/programacion_lineal/problema.py
 
 from dataclasses import dataclass, field
 from fractions import Fraction
 from typing import List, Union
-from src.models.entity.enums import TipoOptimizacion, SignoRestriccion
+from src.models.entity.programacion_lineal.enums import TipoOptimizacion, SignoRestriccion
 
 # Tipo de dato estricto para soportar tanto precisión decimal como exacta
 Numerico = Union[int, float, Fraction]

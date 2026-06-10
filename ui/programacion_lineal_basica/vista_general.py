@@ -8,9 +8,9 @@ from __future__ import annotations
 from typing import List, Optional
 import flet as ft
 
-from src.models.entity.enums import EstadoProblema, TipoOptimizacion
-from src.models.entity.problema import ProblemaPL
-from src.models.entity.respuesta import RespuestaSciPyPL
+from src.models.entity.programacion_lineal.enums import EstadoProblema, TipoOptimizacion
+from src.models.entity.programacion_lineal.problema import ProblemaPL
+from src.models.entity.programacion_lineal.respuesta import RespuestaSciPyPL
 
 # Paleta de colores institucional
 ACCENT_COLOR: str = "#7c3aed"

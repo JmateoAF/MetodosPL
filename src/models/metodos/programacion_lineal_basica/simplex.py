@@ -26,9 +26,9 @@ import numpy as np
 from typing import List, Optional
 
 # Importaciones estrictas de las entidades de dominio orientadas a objetos
-from src.models.entity.enums import EstadoProblema, TipoOptimizacion, SignoRestriccion
-from src.models.entity.problema import ProblemaPL
-from src.models.entity.respuesta import RespuestaTabularPL, IteracionTabular, NumericoTabular
+from src.models.entity.programacion_lineal.enums import EstadoProblema, TipoOptimizacion, SignoRestriccion
+from src.models.entity.programacion_lineal.problema import ProblemaPL
+from src.models.entity.programacion_lineal.respuesta import RespuestaTabularPL, IteracionTabular, NumericoTabular
 
 
 class SolucionadorSimplex:
