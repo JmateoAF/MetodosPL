@@ -236,8 +236,9 @@ def VistaIngreso(controlador: ControladorLineal, navegar_a=None):
                     ft.Text(titulo, size=13, weight=ft.FontWeight.BOLD, color=TEXT_PRIMARY),
                     contenido,
                 ],
-                spacing=12
+                spacing=12,
             ),
+            expand=True,
             padding=16, border_radius=12, bgcolor=BG_CARD,
             border=ft.Border(
                 top=ft.BorderSide(1, BORDER_COLOR), bottom=ft.BorderSide(1, BORDER_COLOR),
@@ -391,6 +392,7 @@ def VistaIngreso(controlador: ControladorLineal, navegar_a=None):
             bgcolor=BG_FIELD,
             color=TEXT_PRIMARY,
             label_style=ft.TextStyle(color=TEXT_MUTED, size=11),
+            expand=True,
             border_radius=8,
             on_change=cambiar_objetivo_avanzado,
         )
@@ -407,6 +409,7 @@ def VistaIngreso(controlador: ControladorLineal, navegar_a=None):
             label_style=ft.TextStyle(color=TEXT_MUTED, size=11),
             border_radius=8,
             multiline=True,
+            expand=True,
             min_lines=4,
             on_change=cambiar_restricciones_avanzado,
         )
@@ -418,9 +421,11 @@ def VistaIngreso(controlador: ControladorLineal, navegar_a=None):
                     input_objetivo_avanzado,
                     input_restricciones_avanzado
                 ],
-                spacing=14
+                spacing=14,
+                expand=True,
             )
         )
+
         scrollable_body = tarjeta_avanzada
 
     cabecera_informativa = ft.Column(
