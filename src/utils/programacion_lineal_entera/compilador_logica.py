@@ -61,8 +61,11 @@ class CompiladorLogico:
         """Método para desarmar el árbol lógico inyectando la M Grande."""
         y = self._compilar_nodo_recursivo(nodo, restricciones, tipos_vars, objetivo)
         # Forzar que la condición del árbol raíz sea verdadera (y == 1)
-        # Excepto si es una asignación lógica directa en la raíz
-        if isinstance(nodo, NodoLogico) and isinstance(nodo.operador, OperadorAsignacionLogica):
+        # Excepto si es una asignación lógica directa en la raíz o una activación de umbral
+        if isinstance(nodo, NodoLogico) and (
+            isinstance(nodo.operador, OperadorAsignacionLogica) or 
+            nodo.operador == OperadorMGrande.ACTIVACION_UMBRAL
+        ):
             return
         coefs = [Fraction(0)] * len(tipos_vars)
         coefs[y] = Fraction(1)
@@ -155,6 +158,37 @@ class CompiladorLogico:
             return y
         
         elif isinstance(nodo, NodoLogico):
+            # 2. Caso especial: ACTIVACION_UMBRAL (Costo fijo o activación)
+            if nodo.operador == OperadorMGrande.ACTIVACION_UMBRAL:
+                # El último hijo es la variable binaria trigger
+                trigger_var = nodo.hijos[-1]
+                y = self._compilar_nodo_recursivo(trigger_var, restricciones, tipos_vars, objetivo)
+                
+                # Los demás hijos son los restringidos
+                for hijo in nodo.hijos[:-1]:
+                    if isinstance(hijo, Restriccion):
+                        for idx, coef in enumerate(hijo.coeficientes):
+                            if coef != 0:
+                                coefs = [Fraction(0)] * len(tipos_vars)
+                                coefs[idx] = Fraction(1)
+                                coefs[y] = -self.M
+                                restricciones.append(Restriccion(
+                                    coeficientes=coefs,
+                                    signo=SignoRestriccion.MENOR_IGUAL,
+                                    rhs=Fraction(0)
+                                ))
+                    elif isinstance(hijo, (NodoLogico, str)):
+                        w = self._compilar_nodo_recursivo(hijo, restricciones, tipos_vars, objetivo)
+                        coefs = [Fraction(0)] * len(tipos_vars)
+                        coefs[w] = Fraction(1)
+                        coefs[y] = -self.M
+                        restricciones.append(Restriccion(
+                            coeficientes=coefs,
+                            signo=SignoRestriccion.MENOR_IGUAL,
+                            rhs=Fraction(0)
+                        ))
+                return y
+
             # 1. Determinar el índice de la variable de control 'y'
             # y es asignada si variable_control_asociada es de tipo 'xN' (Caso Suelto)
             # o si ya fue creada como 'a_i'. Si es None, creamos variable artificial intermedia.
@@ -180,32 +214,6 @@ class CompiladorLogico:
                 objetivo.append(Fraction(0))
                 art_name = f"a_{len(self.artificial_vars) + 1}"
                 self.artificial_vars[art_name] = y
-            
-            # 2. Caso especial: ACTIVACION_UMBRAL (Costo fijo o activación)
-            if nodo.operador == OperadorMGrande.ACTIVACION_UMBRAL:
-                for hijo in nodo.hijos:
-                    if isinstance(hijo, Restriccion):
-                        for idx, coef in enumerate(hijo.coeficientes):
-                            if coef != 0:
-                                coefs = [Fraction(0)] * len(tipos_vars)
-                                coefs[idx] = Fraction(1)
-                                coefs[y] = -self.M
-                                restricciones.append(Restriccion(
-                                    coeficientes=coefs,
-                                    signo=SignoRestriccion.MENOR_IGUAL,
-                                    rhs=Fraction(0)
-                                ))
-                    elif isinstance(hijo, (NodoLogico, str)):
-                        w = self._compilar_nodo_recursivo(hijo, restricciones, tipos_vars, objetivo)
-                        coefs = [Fraction(0)] * len(tipos_vars)
-                        coefs[w] = Fraction(1)
-                        coefs[y] = -self.M
-                        restricciones.append(Restriccion(
-                            coeficientes=coefs,
-                            signo=SignoRestriccion.MENOR_IGUAL,
-                            rhs=Fraction(0)
-                        ))
-                return y
 
             # Procesar hijos recursivamente para obtener sus índices de variables de control
             child_vars = [

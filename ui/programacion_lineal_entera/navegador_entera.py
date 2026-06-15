@@ -1,61 +1,67 @@
+# ui/programacion_lineal_entera/navegador_entera.py
 """
 navegador_entera.py
 ===================
 Enrutador especializado para la familia de Programación Lineal Entera (PI).
-Aísla las vistas en desarrollo para evitar colisiones de diccionarios con la arquitectura POO.
 """
 
 import flet as ft
 from src.controller.controlador_entera import ControladorEntera
 
-ACCENT_COLOR, BG_RAIL, BG_MAIN, DIVIDER_COLOR = "#7c3aed", "#0d0f1a", "#0f1117", "#1e2130"
+# Importaciones de las nuevas vistas de PLE
+from ui.programacion_lineal_entera.vista_ingreso_pi import VistaIngresoPi
+from ui.programacion_lineal_entera.vista_historial_pi import VistaHistorialPi
+from ui.programacion_lineal_entera.vista_branch_bound import VistaBranchBound
+from ui.programacion_lineal_entera.vista_cortes_gomory import VistaCortesGomory
+from ui.programacion_lineal_entera.vista_enumeracion_balas import VistaEnumeracionBalas
 
-@ft.component
-def VistaConstruccion(titulo: str):
-    """Marcador de posición estático para aislar las vistas basadas en diccionarios."""
-    return ft.Container(
-        expand=True,
-        alignment=ft.alignment.Alignment.TOP_CENTER,
-        content=ft.Column(
-            [
-                ft.Icon(ft.Icons.CONSTRUCTION, size=64, color="#6b7280"),
-                ft.Text(f"Módulo: {titulo}", size=20, weight=ft.FontWeight.BOLD, color="white"),
-                ft.Text("Esta vista se encuentra en refactorización arquitectónica a POO puro.", size=13, color="#6b7280"),
-            ],
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            spacing=10
-        )
-    )
+ACCENT_COLOR, BG_RAIL, BG_MAIN, DIVIDER_COLOR = "#7c3aed", "#0d0f1a", "#0f1117", "#1e2130"
 
 @ft.component
 def NavegadorEntera(controlador: ControladorEntera):
     selected_index, set_selected_index = ft.use_state(0)
 
+    # Callback para cambiar vistas
+    def show_view(index: int) -> None:
+        set_selected_index(index)
+
+    # Cache de VistaIngresoPi para conservar los campos editados
+    vista_ingreso_ref = ft.use_ref(None)
+    if vista_ingreso_ref.current is None:
+        vista_ingreso_ref.current = VistaIngresoPi(controlador, show_view)
+
     def on_nav_change(e: ft.ControlEvent) -> None:
         nav_rail = e.control
         indice = int(nav_rail.selected_index) 
-        set_selected_index(indice)
+        show_view(indice)
 
     def create_view(index: int) -> ft.Control:
         match index:
-            case 0: return VistaConstruccion("Ingreso de Parámetros Enteros")
-            case 1: return VistaConstruccion("Algoritmo de Ramificación y Acotamiento")
-            case _: return VistaConstruccion("Módulo PI")
+            case 0: return vista_ingreso_ref.current
+            case 1: return VistaHistorialPi(controlador, show_view)
+            case 2: return VistaBranchBound(controlador)
+            case 3: return VistaCortesGomory(controlador)
+            case 4: return VistaEnumeracionBalas(controlador)
+            # Fallback en caso de que vuelva a cargar vista ingreso
+            case _: return vista_ingreso_ref.current
 
     destinations = [
         ft.NavigationRailDestination(icon=ft.Icons.EDIT_NOTE, label="Ingresar PI"),
-        ft.NavigationRailDestination(icon=ft.Icons.ALBUM, label="Branch & Bound"),
+        ft.NavigationRailDestination(icon=ft.Icons.HISTORY, label="Historial PI"),
+        ft.NavigationRailDestination(icon=ft.Icons.ACCOUNT_TREE, label="Branch & Bound"),
+        ft.NavigationRailDestination(icon=ft.Icons.TABLE_ROWS, label="Cortes Gomory"),
+        ft.NavigationRailDestination(icon=ft.Icons.LAYERS, label="Enum. Balas"),
     ]
 
     nav = ft.NavigationRail(
         selected_index=selected_index,
+        label_type=ft.NavigationRailLabelType.ALL,
+        min_width=80,
+        extended=False,
+        bgcolor=BG_RAIL,
+        indicator_color=ACCENT_COLOR,
         destinations=destinations,
         on_change=on_nav_change,
-        extended=False, 
-        min_width=80,
-        label_type=ft.NavigationRailLabelType.ALL,
-        bgcolor=BG_RAIL, 
-        indicator_color=ACCENT_COLOR,
         selected_label_text_style=ft.TextStyle(color=ACCENT_COLOR, size=11),
         unselected_label_text_style=ft.TextStyle(color="#6b7280", size=11),
     )
