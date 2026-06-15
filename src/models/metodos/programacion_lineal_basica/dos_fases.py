@@ -104,7 +104,7 @@ class SolucionadorDosFases:
         )
 
         # Si el óptimo de la Fase 1 es W > 0, el problema original es inviable
-        if resultado_f1 == EstadoProblema.INVIABLE or (tableau_f1_final is not None and tableau_f1_final[0, -1] > Fraction(0)):
+        if resultado_f1 == EstadoProblema.INVIABLE or (tableau_f1_final is not None and tableau_f1_final[0, -1] < Fraction(0)):
             return RespuestaTabularPL(
                 estado=EstadoProblema.INVIABLE,
                 mensaje=EstadoProblema.INVIABLE.value,
@@ -308,7 +308,7 @@ class SolucionadorDosFases:
             col_pivote = self._columna_pivote(tableau)
             if col_pivote is None:
                 iteraciones.append(self._crear_snapshot(tableau, None, None, f"FASE {fase} — Óptimo alcanzado.", fase, nombres))
-                if fase == 1 and tableau[0, -1] > Fraction(0):
+                if fase == 1 and tableau[0, -1] < Fraction(0):
                     return EstadoProblema.INVIABLE, iteraciones, tableau
                 return EstadoProblema.OPTIMO, iteraciones, tableau
 

@@ -3,7 +3,12 @@
 from dataclasses import dataclass, field
 from typing import List, Optional, Union
 from src.models.entity.programacion_lineal.problema import ProblemaPL
-from src.models.entity.programacion_lineal_entera.enums import TipoVariable, OperadorLogico, OperadorMGrande
+from src.models.entity.programacion_lineal_entera.enums import (
+    TipoVariable,
+    OperadorLogico,
+    OperadorMGrande,
+    OperadorAsignacionLogica
+)
 from src.models.entity.programacion_lineal.problema import Restriccion
 
 
@@ -11,20 +16,23 @@ from src.models.entity.programacion_lineal.problema import Restriccion
 class NodoLogico:
     """
     Representa un nodo en el árbol de expresiones lógicas (AST).
-    Permite anidar paréntesis de forma infinita sin alterar el backend.
+    Permite anidar y evaluar estructuras lógicas puras, avanzadas (M Grande) 
+    y de asignación reificada de forma infinita.
     """
-    # El operador que une a los hijos (puede ser de Álgebra Pura o M Grande)
-    operador: Union[OperadorLogico, OperadorMGrande]
+    # El operador que une a los hijos (Puro, M Grande o de Asignación/Evaluación)
+    operador: Union[OperadorLogico, OperadorMGrande, OperadorAsignacionLogica]
     
-    # Hijos del nodo: pueden ser restricciones matemáticas puras o sub-nodos (paréntesis)
-    hijos: List[Union[Restriccion, NodoLogico]] = field(default_factory=list)
+    # Hijos del nodo: pueden ser restricciones matemáticas: Restriccion, sub-nodos (paréntesis): NodoLogico
+    # o variables binarias individuales (para las asignaciones lógicas evaluativas): str
+    hijos: List[Union[Restriccion, "NodoLogico", str]] = field(default_factory=list)
     
-    # Variable binaria opcional que almacena el resultado/activación de este bloque intermedio
-    variable_control_asociada: Optional[int] = None
+    # Almacena el identificador o nombre de la variable binaria (directa x1, x2,... o artificial 'a_i') 
+    # que captura/reifica el resultado de la evaluación de este bloque intermedio.
+    variable_control_asociada: Optional[str] = None
 
     def __post_init__(self) -> None:
         if not self.hijos:
-            raise ValueError("Un nodo lógico no puede estar vacío, debe contener hijos.")
+            raise ValueError("Un nodo lógico no puede estar vacío, debe contener elementos hijos.")
 
 
 @dataclass(frozen=True)

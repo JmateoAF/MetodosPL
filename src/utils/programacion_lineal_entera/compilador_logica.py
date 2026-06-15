@@ -1,13 +1,13 @@
 # src/utils/programacion_lineal_entera/compilador_logica.py
 
 from fractions import Fraction
-from typing import List, Union, Optional
-import numpy as np
+from typing import List, Union, Optional, Dict
 
 from src.models.entity.programacion_lineal_entera.problema import ProblemaPLE, Restriccion, ProblemaModeladoLogico, NodoLogico
-from src.models.entity.programacion_lineal_entera.enums import TipoVariable, OperadorLogico, OperadorMGrande
+from src.models.entity.programacion_lineal_entera.enums import TipoVariable, OperadorLogico, OperadorMGrande, OperadorAsignacionLogica
 from src.models.entity.programacion_lineal.enums import SignoRestriccion
 from src.models.entity.programacion_lineal.problema import Numerico
+
 
 class CompiladorLogico:
     """
@@ -17,8 +17,12 @@ class CompiladorLogico:
     
     def __init__(self, M: float = 1_000_000_000.0) -> None:
         self.M = Fraction(M)
+        self.artificial_vars: Dict[str, int] = {}
 
     def compilar(self, problema_logico: ProblemaModeladoLogico) -> ProblemaPLE:
+        # Reiniciar el mapa de variables artificiales
+        self.artificial_vars = {}
+        
         # 1. Copiar las restricciones algebraicas base que el usuario ingresó normalmente
         restricciones_finales = list(problema_logico.restricciones)
         tipos_variables_finales = list(problema_logico.tipos_variables)
@@ -57,6 +61,9 @@ class CompiladorLogico:
         """Método para desarmar el árbol lógico inyectando la M Grande."""
         y = self._compilar_nodo_recursivo(nodo, restricciones, tipos_vars, objetivo)
         # Forzar que la condición del árbol raíz sea verdadera (y == 1)
+        # Excepto si es una asignación lógica directa en la raíz
+        if isinstance(nodo, NodoLogico) and isinstance(nodo.operador, OperadorAsignacionLogica):
+            return
         coefs = [Fraction(0)] * len(tipos_vars)
         coefs[y] = Fraction(1)
         restricciones.append(Restriccion(
@@ -65,11 +72,18 @@ class CompiladorLogico:
             rhs=Fraction(1)
         ))
 
-    def _compilar_nodo_recursivo(self, nodo: Union[Restriccion, NodoLogico], restricciones: List[Restriccion], 
+    def _compilar_nodo_recursivo(self, nodo: Union[Restriccion, NodoLogico, str], restricciones: List[Restriccion], 
                                  tipos_vars: List[TipoVariable], objetivo: List[Numerico]) -> int:
+        if isinstance(nodo, str):
+            if nodo.startswith("x") and nodo[1:].isdigit():
+                return int(nodo[1:]) - 1
+            elif nodo.startswith("a_"):
+                return self.artificial_vars[nodo]
+            else:
+                raise ValueError(f"Identificador de variable no válido en el compilador: {nodo}")
+
         if isinstance(nodo, Restriccion):
             # Intentar detectar si la restricción es simplemente la afirmación de una variable binaria
-            # del estilo: 1 * X_j >= 1 o 1 * X_j == 1
             nonzero_indices = [idx for idx, coef in enumerate(nodo.coeficientes) if coef != 0]
             if len(nonzero_indices) == 1:
                 idx = nonzero_indices[0]
@@ -83,6 +97,7 @@ class CompiladorLogico:
                             y = len(tipos_vars)
                             tipos_vars.append(TipoVariable.BINARIA)
                             objetivo.append(Fraction(0))
+                            self.artificial_vars[f"a_{len(self.artificial_vars) + 1}"] = y
                             coefs_eq = [Fraction(0)] * len(tipos_vars)
                             coefs_eq[y] = Fraction(1)
                             coefs_eq[idx] = Fraction(1)
@@ -97,6 +112,7 @@ class CompiladorLogico:
             y = len(tipos_vars)
             tipos_vars.append(TipoVariable.BINARIA)
             objetivo.append(Fraction(0))
+            self.artificial_vars[f"a_{len(self.artificial_vars) + 1}"] = y
             
             coefs = [Fraction(c) for c in nodo.coeficientes]
             # Rellenar con ceros temporales
@@ -139,15 +155,33 @@ class CompiladorLogico:
             return y
         
         elif isinstance(nodo, NodoLogico):
-            # Obtener la variable de control asignada o crear una nueva
+            # 1. Determinar el índice de la variable de control 'y'
+            # y es asignada si variable_control_asociada es de tipo 'xN' (Caso Suelto)
+            # o si ya fue creada como 'a_i'. Si es None, creamos variable artificial intermedia.
+            y: int
             if nodo.variable_control_asociada is not None:
-                y = nodo.variable_control_asociada
+                name = nodo.variable_control_asociada
+                if name.startswith("x"):
+                    y = int(name[1:]) - 1
+                elif name.startswith("a_"):
+                    if name not in self.artificial_vars:
+                        # Si no está en el mapa, la creamos
+                        y_new = len(tipos_vars)
+                        tipos_vars.append(TipoVariable.BINARIA)
+                        objetivo.append(Fraction(0))
+                        self.artificial_vars[name] = y_new
+                    y = self.artificial_vars[name]
+                else:
+                    raise ValueError(f"Nombre de variable de control desconocido: {name}")
             else:
+                # Generamos una nueva variable artificial y guardamos su nombre como a_i
                 y = len(tipos_vars)
                 tipos_vars.append(TipoVariable.BINARIA)
                 objetivo.append(Fraction(0))
+                art_name = f"a_{len(self.artificial_vars) + 1}"
+                self.artificial_vars[art_name] = y
             
-            # Caso especial: ACTIVACION_UMBRAL (Costo fijo o activación)
+            # 2. Caso especial: ACTIVACION_UMBRAL (Costo fijo o activación)
             if nodo.operador == OperadorMGrande.ACTIVACION_UMBRAL:
                 for hijo in nodo.hijos:
                     if isinstance(hijo, Restriccion):
@@ -161,7 +195,7 @@ class CompiladorLogico:
                                     signo=SignoRestriccion.MENOR_IGUAL,
                                     rhs=Fraction(0)
                                 ))
-                    elif isinstance(hijo, NodoLogico):
+                    elif isinstance(hijo, (NodoLogico, str)):
                         w = self._compilar_nodo_recursivo(hijo, restricciones, tipos_vars, objetivo)
                         coefs = [Fraction(0)] * len(tipos_vars)
                         coefs[w] = Fraction(1)
@@ -173,7 +207,7 @@ class CompiladorLogico:
                         ))
                 return y
 
-            # Procesar hijos recursivamente
+            # Procesar hijos recursivamente para obtener sus índices de variables de control
             child_vars = [
                 self._compilar_nodo_recursivo(hijo, restricciones, tipos_vars, objetivo)
                 for hijo in nodo.hijos
@@ -182,14 +216,15 @@ class CompiladorLogico:
             op = nodo.operador
             
             if op == OperadorLogico.NEGACION:
-                # y + child = 1
+                # Incompatibilidad binaria: w1 + w2 <= 1 (con condicional y => w1 + w2 + M * y <= 1 + M)
                 coefs = [Fraction(0)] * len(tipos_vars)
-                coefs[y] = Fraction(1)
                 coefs[child_vars[0]] = Fraction(1)
+                coefs[child_vars[1]] = Fraction(1)
+                coefs[y] = self.M
                 restricciones.append(Restriccion(
                     coeficientes=coefs,
-                    signo=SignoRestriccion.IGUAL,
-                    rhs=Fraction(1)
+                    signo=SignoRestriccion.MENOR_IGUAL,
+                    rhs=Fraction(1) + self.M
                 ))
                 
             elif op in (OperadorLogico.CONJUNCION, OperadorMGrande.CONJUNCION_RESTRICCIONES):
@@ -286,7 +321,7 @@ class CompiladorLogico:
                 ))
                 
             elif op == OperadorMGrande.SELECCION_K_DE_N:
-                K = nodo.variable_control_asociada if nodo.variable_control_asociada is not None else 1
+                K = int(nodo.variable_control_asociada) if nodo.variable_control_asociada is not None else 1
                 # sum(w_r) + M * y <= K + M
                 coefs_le = [Fraction(0)] * len(tipos_vars)
                 coefs_le[y] = self.M
@@ -308,6 +343,72 @@ class CompiladorLogico:
                     signo=SignoRestriccion.MENOR_IGUAL,
                     rhs=self.M - Fraction(K)
                 ))
+
+            # 3. Operadores de Asignación Lógica Booleana (Reificación)
+            elif op == OperadorAsignacionLogica.AND_EVAL:
+                # y = AND(x1, x2)
+                # 1. y <= x1 => y - x1 <= 0
+                coefs1 = [Fraction(0)] * len(tipos_vars)
+                coefs1[y] = Fraction(1)
+                coefs1[child_vars[0]] = Fraction(-1)
+                restricciones.append(Restriccion(coefs1, SignoRestriccion.MENOR_IGUAL, Fraction(0)))
+                # 2. y <= x2 => y - x2 <= 0
+                coefs2 = [Fraction(0)] * len(tipos_vars)
+                coefs2[y] = Fraction(1)
+                coefs2[child_vars[1]] = Fraction(-1)
+                restricciones.append(Restriccion(coefs2, SignoRestriccion.MENOR_IGUAL, Fraction(0)))
+                # 3. x1 + x2 - y <= 1
+                coefs3 = [Fraction(0)] * len(tipos_vars)
+                coefs3[child_vars[0]] = Fraction(1)
+                coefs3[child_vars[1]] = Fraction(1)
+                coefs3[y] = Fraction(-1)
+                restricciones.append(Restriccion(coefs3, SignoRestriccion.MENOR_IGUAL, Fraction(1)))
+
+            elif op == OperadorAsignacionLogica.OR_EVAL:
+                # y = OR(x1, x2)
+                # 1. y >= x1 => x1 - y <= 0
+                coefs1 = [Fraction(0)] * len(tipos_vars)
+                coefs1[child_vars[0]] = Fraction(1)
+                coefs1[y] = Fraction(-1)
+                restricciones.append(Restriccion(coefs1, SignoRestriccion.MENOR_IGUAL, Fraction(0)))
+                # 2. y >= x2 => x2 - y <= 0
+                coefs2 = [Fraction(0)] * len(tipos_vars)
+                coefs2[child_vars[1]] = Fraction(1)
+                coefs2[y] = Fraction(-1)
+                restricciones.append(Restriccion(coefs2, SignoRestriccion.MENOR_IGUAL, Fraction(0)))
+                # 3. x1 + x2 - y >= 0 => -x1 - x2 + y <= 0
+                coefs3 = [Fraction(0)] * len(tipos_vars)
+                coefs3[child_vars[0]] = Fraction(-1)
+                coefs3[child_vars[1]] = Fraction(-1)
+                coefs3[y] = Fraction(1)
+                restricciones.append(Restriccion(coefs3, SignoRestriccion.MENOR_IGUAL, Fraction(0)))
+
+            elif op == OperadorAsignacionLogica.XOR_EVAL:
+                # y = XOR(x1, x2)
+                # 1. y <= x1 + x2 => y - x1 - x2 <= 0
+                coefs1 = [Fraction(0)] * len(tipos_vars)
+                coefs1[y] = Fraction(1)
+                coefs1[child_vars[0]] = Fraction(-1)
+                coefs1[child_vars[1]] = Fraction(-1)
+                restricciones.append(Restriccion(coefs1, SignoRestriccion.MENOR_IGUAL, Fraction(0)))
+                # 2. y >= x1 - x2 => x1 - x2 - y <= 0
+                coefs2 = [Fraction(0)] * len(tipos_vars)
+                coefs2[child_vars[0]] = Fraction(1)
+                coefs2[child_vars[1]] = Fraction(-1)
+                coefs2[y] = Fraction(-1)
+                restricciones.append(Restriccion(coefs2, SignoRestriccion.MENOR_IGUAL, Fraction(0)))
+                # 3. y >= x2 - x1 => -x1 + x2 - y <= 0
+                coefs3 = [Fraction(0)] * len(tipos_vars)
+                coefs3[child_vars[0]] = Fraction(-1)
+                coefs3[child_vars[1]] = Fraction(1)
+                coefs3[y] = Fraction(-1)
+                restricciones.append(Restriccion(coefs3, SignoRestriccion.MENOR_IGUAL, Fraction(0)))
+                # 4. y <= 2 - x1 - x2 => x1 + x2 + y <= 2
+                coefs4 = [Fraction(0)] * len(tipos_vars)
+                coefs4[child_vars[0]] = Fraction(1)
+                coefs4[child_vars[1]] = Fraction(1)
+                coefs4[y] = Fraction(1)
+                restricciones.append(Restriccion(coefs4, SignoRestriccion.MENOR_IGUAL, Fraction(2)))
                 
             return y
         
