@@ -1,7 +1,5 @@
-# ui/vista_general.py
 """
-vista_general.py (Refactorizado con Cobertura del 100% de Datos Extra)
-======================================================================
+Refactorizado con Cobertura del 100% de Datos Extra
 """
 
 from __future__ import annotations
@@ -218,7 +216,7 @@ def VistaGeneral(controlador: ControladorLineal):
         content=ft.Column(
             [
                 ft.Text(fo_formateada, size=14, color=TEXT_PRIMARY, weight=ft.FontWeight.W_600, selectable=True),
-                ft.Text(f"Mensaje del motor: {resultado.message}", size=11, color=TEXT_MUTED, italic=True)
+                ft.Text(f"Mensaje del motor: {resultado.mensaje}", size=11, color=TEXT_MUTED, italic=True)
             ],
             spacing=6
         ),

@@ -518,14 +518,14 @@ def VistaIngresoPi(controlador: ControladorEntera, navegar_a=None):
 
             if problema_entidad is not None:
                 controlador.ingresar_problema(problema_entidad)
-                mostrar_snack_bar(e.control.page, "✓ Problema PLE validado, compilado y guardado en historial con éxito.", GREEN)
+                mostrar_snack_bar(e.control.page, "Problema PLE validado, compilado y guardado en historial con éxito.", GREEN)
                 if navegar_a:
                     navegar_a(1)
             else:
                 raise ValueError("Estructura de datos nula generada.")
 
         except Exception as error_capturado:
-            mostrar_snack_bar(e.control.page, f"✗ Error de Validación: {error_capturado}", RED)
+            mostrar_snack_bar(e.control.page, f"Error de Validación: {error_capturado}", RED)
 
     # --- Renderizado Layout ---
     def render_bloque_contenedor(titulo: str, contenido: ft.Control) -> ft.Container:

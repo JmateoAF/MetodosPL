@@ -1,7 +1,4 @@
-# ui/programacion_lineal_entera/vista_branch_bound.py
 """
-vista_branch_bound.py
-=====================
 Componente visual de la interfaz de usuario desarrollado sobre Flet (v0.85).
 Responsable del renderizado del árbol de ramificación y poda (Branch & Bound).
 """
@@ -82,7 +79,7 @@ def _crear_alerta_status(mensaje: str, color: str, icono=None) -> ft.Row:
 
 # Colores y etiquetas para cada estado de nodo
 _ESTADO_CFG = {
-    "optimo":              (GREEN,        "✓ Óptimo entero"),
+    "optimo":              (GREEN,        "Óptimo entero"),
     "podado_cota":         (RED,          "Podado · cota"),
     "podado_infactible":   (RED,          "Podado · infactible"),
     "podado":              (RED,          "Podado"),
@@ -282,6 +279,7 @@ def _renderizar_arbol(resultado: RespuestaBranchAndBound, num_original_vars: int
     return controles
 
 @ft.component
+
 def VistaBranchBound(controlador: ControladorEntera):
     problema = controlador.problema_activo
 

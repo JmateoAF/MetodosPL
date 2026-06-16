@@ -221,12 +221,14 @@ def VistaIngreso(controlador: ControladorLineal, navegar_a=None):
 
             if problema_entidad is not None:
                 controlador.ingresar_problema(problema_entidad)
-                set_status_text_val(("✓ Problema matemáticamente validado, guardado y activado con éxito.", GREEN))
+                set_status_text_val(("Problema matemáticamente validado, guardado y activado con éxito.", GREEN))
+                if navegar_a:
+                    navegar_a(2)
             else:
                 raise ValueError("Estructura de datos nula generada.")
 
         except Exception as error_capturado:
-            set_status_text_val((f"✗ Error de Validación: {error_capturado}", RED))
+            set_status_text_val((f"Error de Validación: {error_capturado}", RED))
 
     # --- Renderizado Layout ---
     def render_bloque_contenedor(titulo: str, contenido: ft.Control) -> ft.Container:

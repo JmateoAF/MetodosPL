@@ -1,9 +1,6 @@
-# ui/vista_grafica.py
 """
-vista_grafica.py
-================
 Componente visual de la interfaz de usuario desarrollado sobre Flet (v0.85).
-Se encarga de representar de forma bidimensional (2D) la región factible y el 
+Se encarga de representar de forma bidimensional 2D la región factible y el 
 punto óptimo del modelo lineal, acompañado de su análisis analítico completo.
 """
 
