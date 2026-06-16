@@ -5,7 +5,7 @@ from src.controller.controlador_principal import ControladorPrincipal
 from ui.navegador_principal import NavegadorPrincipal
 
 def main(page: ft.Page):
-    page.title = "Optimizador Lineal MVC"
+    page.title = "Optimizador Lineal"
     page.theme_mode = ft.ThemeMode.DARK
     page.theme = ft.Theme(color_scheme_seed="#4b2981")
 

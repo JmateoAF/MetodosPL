@@ -1,8 +1,6 @@
 """
-controlador_principal.py
-========================
-Implementa el Patrón Fachada (Facade) para orquestar los distintos
-sub-controladores matemáticos del ecosistema.
+Implementa el Patrón Fachada para orquestar los distintos
+sub-controladores matemáticos del ecosistema
 """
 
 from src.controller.controlador_lineal import ControladorLineal
