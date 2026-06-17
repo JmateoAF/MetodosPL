@@ -1,5 +1,3 @@
-# src/models/metodos/programacion_lineal_entera/planos_corte.py
-
 from fractions import Fraction
 import math
 from typing import List, Optional, Tuple, Dict
@@ -65,7 +63,7 @@ class SolucionadorPlanosCorte:
 
             z_optimo = res_tabular.z_optimo
             variables_decision = res_tabular.variables_decision
-            assert variables_decision is not None
+            if variables_decision is None: return RespuestaPlanoCorte(mensaje="Error en la solución")
 
             # Buscar variables enteras/binarias que tengan valor fraccionario
             fractional_vars = []

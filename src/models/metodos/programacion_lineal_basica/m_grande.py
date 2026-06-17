@@ -1,7 +1,5 @@
 # src/models/metodos/m_grande.py
 """
-m_grande.py
-===========
 Módulo de backend para la resolución paso a paso de problemas de
 Programación Lineal mediante el Método de la M Grande (Big M Method).
 
@@ -105,7 +103,6 @@ class SolucionadorGranM:
                 entrada["holgura"] = col_aux
                 col_aux += 1
                 n_holguras += 1
-
             elif r.signo == SignoRestriccion.MAYOR_IGUAL:
                 entrada["holgura"] = col_aux   # Columna del exceso (coeficiente -1)
                 col_aux += 1
@@ -114,13 +111,14 @@ class SolucionadorGranM:
                 self._idx_artificiales.append(col_aux)
                 col_aux += 1
                 n_artificiales += 1
-
             elif r.signo == SignoRestriccion.IGUAL:
                 entrada["artificial"] = col_aux
                 self._idx_artificiales.append(col_aux)
                 col_aux += 1
                 n_artificiales += 1
-
+            
+            plan.append(entrada)
+        
         self._n_holguras = n_holguras
         self._n_artificiales = n_artificiales
         return plan
@@ -210,7 +208,7 @@ class SolucionadorGranM:
             # 1. Condición de optimalidad
             col_pivote = self._columna_pivote(tableau)
             if col_pivote is None:
-                iteraciones.append(self._crear_snapshot(tableau, None, None, "Solución óptma encontrada."))
+                iteraciones.append(self._crear_snapshot(tableau, None, None, "Solución óptima encontrada."))
                 return self._construir_resultado(EstadoProblema.OPTIMO, tableau, iteraciones)
 
             # 2. Condición de acotamiento

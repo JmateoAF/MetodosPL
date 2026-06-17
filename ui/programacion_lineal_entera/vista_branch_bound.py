@@ -281,6 +281,17 @@ def _renderizar_arbol(resultado: RespuestaBranchAndBound, num_original_vars: int
 @ft.component
 
 def VistaBranchBound(controlador: ControladorEntera):
+    resultado_ref = ft.use_ref(None)
+    problema_ref  = ft.use_ref(None)
+
+    problema_actual = controlador.problema_activo
+    # Solo resolver si el problema cambió
+    if resultado_ref.current is None or problema_ref.current is not problema_actual:
+        problema_ref.current  = problema_actual
+        resultado_ref.current = controlador.resolver_PLE(problema_actual, 1) if problema_actual else None
+
+    resultado = resultado_ref.current
+    
     problema = controlador.problema_activo
 
     header = ft.Column([

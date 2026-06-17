@@ -1,5 +1,3 @@
-# src/utils/localizador_ui.py
-
 from src.models.entity.programacion_lineal.respuesta import IteracionTabular
 
 class LocalizadorUI:
@@ -16,8 +14,8 @@ class LocalizadorUI:
 
         # Compensación de índices: 
         # La primera columna visual es 'Base'. Por ende, las columnas numéricas reales de datos se desplazan +1.
-        columna_ajustada_ui = iteracion.col_pivote + 1
-        fila_ajustada_ui = iteracion.fila_pivote
+        columna_pivote_ui = iteracion.col_pivote + 1
+        fila_pivote_ui = iteracion.fila_pivote
 
-        return indice_fila == fila_ajustada_ui and indice_columna == columna_ajustada_ui
+        return indice_fila == fila_pivote_ui and indice_columna == columna_pivote_ui
     

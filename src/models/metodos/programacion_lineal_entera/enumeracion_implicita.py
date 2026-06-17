@@ -255,7 +255,7 @@ class SolucionadorEnumeracionImplicita:
         return RespuestaEnumeracionImplicita(
             estado=estado_final,
             mensaje=mensaje_final,
-            z_optimo=int(z_final),
+            z_optimo=z_final,
             variables_decision=best_X,
             pasos=pasos
         )

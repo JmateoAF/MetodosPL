@@ -1,7 +1,5 @@
-# ui/programacion_lineal_entera/vista_enumeracion_balas.py
 """
 vista_enumeracion_balas.py
-==========================
 Componente visual de la interfaz de usuario desarrollado sobre Flet (v0.85).
 Responsable de renderizar las iteraciones y podas del algoritmo de Enumeración Implícita (Balas).
 """

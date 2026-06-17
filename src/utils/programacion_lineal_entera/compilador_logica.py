@@ -1,5 +1,3 @@
-# src/utils/programacion_lineal_entera/compilador_logica.py
-
 from fractions import Fraction
 from typing import List, Union, Optional, Dict
 

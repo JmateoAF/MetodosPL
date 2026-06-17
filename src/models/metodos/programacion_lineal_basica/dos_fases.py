@@ -1,7 +1,5 @@
 # src/models/metodos/dos_fases.py
 """
-dos_fases.py
-============
 Módulo de backend para la resolución paso a paso de problemas de
 Programación Lineal mediante el Método de las Dos Fases (Two-Phase Simplex).
 

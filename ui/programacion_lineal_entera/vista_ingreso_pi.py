@@ -520,7 +520,7 @@ def VistaIngresoPi(controlador: ControladorEntera, navegar_a=None):
                 controlador.ingresar_problema(problema_entidad)
                 mostrar_snack_bar(e.control.page, "Problema PLE validado, compilado y guardado en historial con éxito.", GREEN)
                 if navegar_a:
-                    navegar_a(1)
+                    navegar_a(2)
             else:
                 raise ValueError("Estructura de datos nula generada.")
 
@@ -950,7 +950,7 @@ def VistaIngresoPi(controlador: ControladorEntera, navegar_a=None):
             bgcolor=BG_FIELD,
             color=TEXT_PRIMARY,
             label_style=ft.TextStyle(color=TEXT_MUTED, size=11),
-            expand=False,
+            expand=True,
             multiline=True,
             min_lines=2,
             max_lines=2,

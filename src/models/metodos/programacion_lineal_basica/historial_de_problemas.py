@@ -97,7 +97,7 @@ class HistorialDeProblemas:
 
         Retorna
         -------
-        boool
+        bool
             un booleano indicando si ese indice es valido o no
         """
         return 0 <= indice < len(self._historial_de_problemas)

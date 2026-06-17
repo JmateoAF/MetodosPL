@@ -1,7 +1,4 @@
-# src/models/metodos/simplex.py
 """
-simplex.py
-==========
 Módulo de backend para la resolución paso a paso de problemas de
 Programación Lineal mediante el Método Simplex Tabular Estándar.
 
@@ -132,7 +129,7 @@ class SolucionadorSimplex:
             # 1. Condición de optimalidad: coeficientes en la fila Z deben ser >= 0
             col_pivote = self._seleccionar_columna_pivote(tableau)
             if col_pivote is None:
-                iteraciones.append(self._crear_snapshot(tableau, None, None, "Solución óptma encontrada."))
+                iteraciones.append(self._crear_snapshot(tableau, None, None, "Solución óptima encontrada"))
                 return self._construir_respuesta_exitosa(EstadoProblema.OPTIMO, tableau, iteraciones)
 
             # 2. Condición de acotamiento: prueba del cociente mínimo

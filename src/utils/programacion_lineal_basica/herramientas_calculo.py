@@ -1,7 +1,5 @@
 # src/utils/herramientas_calculo.py
 """
-herramientas_calculo.py
-=======================
 Módulo de utilidades matemáticas para el procesamiento y formateo pedagógico
 de los coeficientes algebraicos exactos en el motor de optimización.
 
@@ -63,9 +61,6 @@ class AnalizadorMatematico:
         Ejemplo:
             Fraction(2000000005, 1) -> CoeficienteMGrande(constante_real=5, cantidad_m=2) -> "5 + 2M"
         """
-        # Operaciones algebraicas exactas usando aritmética funcional fraccionaria
-        numerador = valor.numerator
-        denominador = valor.denominator
 
         # Obtener el valor de M bajo el denominador actual
         m_actual = cls.VALOR_M_REFERENCIA

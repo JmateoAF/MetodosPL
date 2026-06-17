@@ -1,7 +1,4 @@
-# src.utils/graficador.py
 """
-graficador.py
-=============
 Módulo de utilidades para generar representaciones gráficas bidimensionales (2D).
 Diseño Thread-safe mediante el uso explícito del backend 'agg' de Matplotlib 
 para garantizar una ejecución asíncrona libre de bloqueos en la interfaz de Flet.
@@ -125,8 +122,8 @@ def generar_grafico_cartesiano(problema: ProblemaPL, resultado_resolucion: Respu
         for spine in ax.spines.values():
             spine.set_color('white')
 
-        ax.set_xlabel("X1", color='white', fontsize=12)
-        ax.set_ylabel("X2", color='white', fontsize=12)
+        ax.set_xlabel("x1", color='white', fontsize=12)
+        ax.set_ylabel("x2", color='white', fontsize=12)
         ax.set_title("Método Gráfico - Región Factible", color='white', fontsize=14, fontweight='bold')
         ax.grid(True, linestyle="--", alpha=0.3, color='gray')
 

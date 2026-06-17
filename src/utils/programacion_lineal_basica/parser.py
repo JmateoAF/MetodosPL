@@ -47,10 +47,6 @@ class MotorParsing:
         except (ValueError, ZeroDivisionError) as err:
             raise ValueError(f"Formato numérico inválido: '{texto_numero}'. Detalles: {err}")
 
-    # ──────────────────────────────────────────────────────────────────
-    # PARSING FORMATO COEFICIENTES (CSV)
-    # ──────────────────────────────────────────────────────────────────
-
     @classmethod
     def csv_a_entidades(cls, texto_objetivo: str, lineas_restricciones: List[str]) -> ProblemaPL:
         """
@@ -98,7 +94,7 @@ class MotorParsing:
             except ValueError:
                 raise ValueError(
                     f"Signo inválido '{signo_str}' en la línea {idx + 1}. "
-                    f"Use exclusivamente: '<=', '=>' o '=='."
+                    f"Use exclusivamente: '<=', '>=' o '=='."
                 )
 
             coeficientes_res: List[Numerico] = [
@@ -120,10 +116,6 @@ class MotorParsing:
             objetivo=objetivo_coefs,
             restricciones=lista_restricciones
         )
-
-    # ──────────────────────────────────────────────────────────────────
-    # PARSING FORMATO NATURAL (ALGEBRAICO)
-    # ──────────────────────────────────────────────────────────────────
 
     @classmethod
     def natural_a_entidades(cls, texto_objetivo: str, lineas_restricciones: List[str]) -> ProblemaPL:
