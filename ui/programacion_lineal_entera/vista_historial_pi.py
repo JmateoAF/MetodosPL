@@ -47,7 +47,7 @@ def _formatear_objetivo(tipo: TipoOptimizacion, objetivo: List[Fraction]) -> str
 def _badge_ui(texto: str, color_hex: str) -> ft.Container:
     return ft.Container(
         content=ft.Text(texto, size=10, color="white", weight=ft.FontWeight.W_600),
-        padding=ft.padding.all(6),
+        padding=ft.Padding.all(6),
         bgcolor=color_hex,
         border_radius=99,
     )
@@ -75,7 +75,7 @@ def VistaHistorialPi(controlador: ControladorEntera, navegar_a=None):
 
     def manejador_cargar_problema(indice: int) -> None:
         controlador.obtener_problema_por_indice(indice)
-        set_status_text_val(("✓ Modelo cargado como problema activo en la sesión.", GREEN))
+        set_status_text_val(("Modelo cargado como problema activo en la sesión.", GREEN))
         if navegar_a:
             # Navegar a Branch & Bound (vista indice 2)
             navegar_a(2)
@@ -84,7 +84,7 @@ def VistaHistorialPi(controlador: ControladorEntera, navegar_a=None):
 
     def manejador_clonar_y_editar(indice: int) -> None:
         controlador.obtener_problema_por_indice(indice)
-        set_status_text_val(("✓ Modelo clonado. Puedes editar sus coeficientes en la vista de ingreso.", AMBER))
+        set_status_text_val(("Modelo clonado. Puedes editar sus coeficientes en la vista de ingreso.", AMBER))
         if navegar_a:
             # Navegar a Ingresar PI (vista indice 0)
             navegar_a(0)

@@ -89,15 +89,24 @@ _ESTADO_CFG = {
 
 def _badge_estado(estado: str) -> ft.Container:
     color, label = _ESTADO_CFG.get(estado, (TEXT_MUTED, estado))
+    text_color = TEXT_PRIMARY
     return ft.Container(
-        content=ft.Text(label, size=10, color=color, weight=ft.FontWeight.W_600),
-        padding=8, bgcolor=color + "22", border_radius=99,
+        content=ft.Text(label, size=10, color=text_color, weight=ft.FontWeight.W_600),
+        padding=8,
+        bgcolor=color + "22",
+        border_radius=99,
+        border=ft.Border(
+            top=ft.BorderSide(1, color + "55"),
+            bottom=ft.BorderSide(1, color + "55"),
+            left=ft.BorderSide(1, color + "55"),
+            right=ft.BorderSide(1, color + "55"),
+        ),
     )
 
 def _crear_nodo_card(nodo: NodoBranchAndBound, level: int, num_original_vars: int) -> ft.Control:
     nodo_id = nodo.id_nodo
     estado = "activo"
-    
+
     # Determinar estado semántico
     msg_l = nodo.mensaje.lower()
     if "factible" in msg_l:
@@ -120,7 +129,7 @@ def _crear_nodo_card(nodo: NodoBranchAndBound, level: int, num_original_vars: in
     ]
     if nodo.id_padre is not None:
         encabezado_items.append(
-            ft.Text(f"· hijo de N{nodo.id_padre}", size=11, color=TEXT_MUTED)
+            ft.Text(f"hijo de N{nodo.id_padre}", size=11, color=TEXT_MUTED)
         )
     if nodo.ramificacion is not None:
         ram = nodo.ramificacion
@@ -129,7 +138,15 @@ def _crear_nodo_card(nodo: NodoBranchAndBound, level: int, num_original_vars: in
         encabezado_items.append(
             ft.Container(
                 content=ft.Text(condicion, size=10, color=BLUE, weight=ft.FontWeight.W_500),
-                padding=6, bgcolor=BLUE + "22", border_radius=4,
+                padding=6,
+                bgcolor=BLUE + "18",
+                border_radius=4,
+                border=ft.Border(
+                    top=ft.BorderSide(1, BLUE + "44"),
+                    bottom=ft.BorderSide(1, BLUE + "44"),
+                    left=ft.BorderSide(1, BLUE + "44"),
+                    right=ft.BorderSide(1, BLUE + "44"),
+                ),
             )
         )
     encabezado_items.append(_badge_estado(estado))
@@ -139,19 +156,24 @@ def _crear_nodo_card(nodo: NodoBranchAndBound, level: int, num_original_vars: in
             content=ft.Column([
                 ft.Text("Z local", size=10, color=TEXT_MUTED),
                 ft.Text(
-                    z_str, size=16,
+                    z_str,
+                    size=16,
                     color=GREEN if estado == "optimo" else BLUE,
                     weight=ft.FontWeight.BOLD,
                 ),
             ], spacing=2),
-            padding=10, border_radius=6, bgcolor="#1e2130",
+            padding=10,
+            border_radius=6,
+            bgcolor="#1a1d31",
             border=ft.Border(
-                top=ft.BorderSide(1, BORDER_COLOR), bottom=ft.BorderSide(1, BORDER_COLOR),
-                left=ft.BorderSide(1, BORDER_COLOR), right=ft.BorderSide(1, BORDER_COLOR),
+                top=ft.BorderSide(1, BORDER_COLOR),
+                bottom=ft.BorderSide(1, BORDER_COLOR),
+                left=ft.BorderSide(1, BORDER_COLOR),
+                right=ft.BorderSide(1, BORDER_COLOR),
             ),
         )
     ]
-    
+
     # Solo mostrar las variables originales, no las artificiales creadas por el compilador
     variables_a_mostrar = (nodo.variables_locales or [])[:num_original_vars]
     for i, v in enumerate(variables_a_mostrar):
@@ -160,34 +182,62 @@ def _crear_nodo_card(nodo: NodoBranchAndBound, level: int, num_original_vars: in
                 content=ft.Column([
                     ft.Text(f"X{i+1}", size=10, color=TEXT_MUTED),
                     ft.Text(_fmt(v), size=14, color=TEXT_PRIMARY, weight=ft.FontWeight.W_500),
-                ], spacing=2, horizontal_alignment=ft.CrossAxisAlignment.CENTER),
-                padding=10, border_radius=6, bgcolor="#1e2130",
+                ], spacing=2),
+                padding=10,
+                border_radius=6,
+                bgcolor="#1a1d31",
                 border=ft.Border(
-                    top=ft.BorderSide(1, BORDER_COLOR), bottom=ft.BorderSide(1, BORDER_COLOR),
-                    left=ft.BorderSide(1, BORDER_COLOR), right=ft.BorderSide(1, BORDER_COLOR),
+                    top=ft.BorderSide(1, BORDER_COLOR),
+                    bottom=ft.BorderSide(1, BORDER_COLOR),
+                    left=ft.BorderSide(1, BORDER_COLOR),
+                    right=ft.BorderSide(1, BORDER_COLOR),
                 ),
             )
         )
 
-    contenido = ft.Column([
-        ft.Row(encabezado_items, spacing=6, wrap=True),
-        ft.Row(valores_items, spacing=6, wrap=True),
-        *([ft.Text(nodo.mensaje, size=11, color=TEXT_MUTED, italic=True)] if nodo.mensaje else []),
-    ], spacing=8)
+    contenido = ft.Column(
+        [
+            ft.Row(encabezado_items, spacing=6, wrap=True),
+            ft.Column(
+                valores_items,
+                spacing=6,
+                horizontal_alignment=ft.CrossAxisAlignment.STRETCH,
+            ),
+            *([ft.Text(nodo.mensaje, size=11, color=TEXT_MUTED, italic=True)] if nodo.mensaje else []),
+        ],
+        spacing=8,
+        horizontal_alignment=ft.CrossAxisAlignment.STRETCH,
+    )
 
     return ft.Row([
-        ft.Container(width=level * 24),        # sangría jerárquica
+        ft.Container(
+            width=max(12, level * 18),
+            content=ft.Column(
+                [
+                    ft.Container(height=8),
+                    ft.Container(
+                        width=2,
+                        height=24,
+                        bgcolor=color_estado + ("66" if es_podado else "55"),
+                    ),
+                ],
+                spacing=0,
+                alignment=ft.MainAxisAlignment.START,
+            ),
+        ),
         ft.Container(
             content=contenido,
-            padding=12, border_radius=10, bgcolor=BG_CARD,
-            opacity=0.5 if es_podado else 1.0,
+            padding=12,
+            border_radius=10,
+            bgcolor=BG_CARD,
             border=ft.Border(
-                top=ft.BorderSide(1, color_estado + ("55" if es_podado else "")),
-                bottom=ft.BorderSide(1, color_estado + ("55" if es_podado else "")),
-                left=ft.BorderSide(3, color_estado + ("55" if es_podado else "")),
+                top=ft.BorderSide(1, color_estado + ("66" if es_podado else "55")),
+                bottom=ft.BorderSide(1, color_estado + ("66" if es_podado else "55")),
+                left=ft.BorderSide(3, color_estado + ("66" if es_podado else "55")),
                 right=ft.BorderSide(1, BORDER_COLOR),
             ),
-            expand=True,
+            width=650,
+            expand=False,
         ),
     ], spacing=0)
 
@@ -264,17 +314,36 @@ def _renderizar_arbol(resultado: RespuestaBranchAndBound, num_original_vars: int
         ft.Text("Árbol de exploración jerárquico", size=12, color=TEXT_MUTED, weight=ft.FontWeight.W_500),
     ]
 
-    # Calcular niveles
-    node_levels = {1: 0}
-    for n in resultado.arbol_nodos:
-        if n.id_padre in node_levels:
-            node_levels[n.id_nodo] = node_levels[n.id_padre] + 1
-        else:
-            node_levels[n.id_nodo] = 0
-
+    # Construir la jerarquía real del árbol para mostrarlo como árbol vertical
+    nodos_por_id = {nodo.id_nodo: nodo for nodo in resultado.arbol_nodos}
+    hijos_por_padre: dict[int, list[NodoBranchAndBound]] = {}
     for nodo in resultado.arbol_nodos:
-        lvl = node_levels.get(nodo.id_nodo, 0)
-        controles.append(_crear_nodo_card(nodo, lvl, num_original_vars))
+        padre = nodo.id_padre if nodo.id_padre is not None else 0
+        hijos_por_padre.setdefault(padre, []).append(nodo)
+
+    def _renderizar_subarbol(nodo_id: int, nivel: int) -> ft.Control:
+        nodo = nodos_por_id.get(nodo_id)
+        if nodo is None:
+            return ft.Container()
+
+        card = _crear_nodo_card(nodo, nivel, num_original_vars)
+        hijos = hijos_por_padre.get(nodo_id, [])
+        if not hijos:
+            return card
+
+        subcontroles = [card]
+        for hijo in hijos:
+            subcontroles.append(_renderizar_subarbol(hijo.id_nodo, nivel + 1))
+
+        return ft.Column(
+            subcontroles,
+            spacing=8,
+            horizontal_alignment=ft.CrossAxisAlignment.START,
+        )
+
+    raiz = next((n for n in resultado.arbol_nodos if n.id_padre is None), None)
+    if raiz is not None:
+        controles.append(_renderizar_subarbol(raiz.id_nodo, 0))
 
     return controles
 
@@ -364,5 +433,5 @@ def VistaBranchBound(controlador: ControladorEntera):
 
     return ft.Column(
         [header, ft.Divider(color=BORDER_COLOR, height=1), status_row, arbol_controls],
-        expand=True, spacing=16, scroll=ft.ScrollMode.AUTO
+        expand=False, spacing=16, scroll=ft.ScrollMode.AUTO
     )
